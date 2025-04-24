@@ -15,5 +15,5 @@ Welcome to our Makeathon 2025 project repository!
 ## Technologies Used
 - [List technologies]
 
-## License
+# License
 [Add license information]
