@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 import os
 from pathlib import Path
-from .slide_extractor import SlideExtractor
+from .slide_extractor_with_images import extract_key_concepts_and_generate_qa
 import openai
 from dotenv import load_dotenv
 
@@ -13,7 +13,6 @@ class Evaluator:
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in .env file")
         self.client = openai.OpenAI(api_key=api_key)
-        self.slide_extractor = SlideExtractor(use_openai=True)
     
     def evaluate(self, course_content: Dict, audio_file_path: str) -> Tuple[float, str]:
         """
@@ -33,8 +32,7 @@ class Evaluator:
             
         try:
             # Extract and analyze content from PDF
-            slides = self.slide_extractor.extract_slides(pdf_path)
-            qa_collection = self.slide_extractor.build_concept_qa(slides)
+            qa_pairs = extract_key_concepts_and_generate_qa(pdf_path)
             
             # Transcribe the audio file
             with open(audio_file_path, "rb") as audio_file:
@@ -45,12 +43,14 @@ class Evaluator:
             
             # Prepare content for evaluation
             key_concepts = []
-            for item in qa_collection:
-                key_concepts.append({
-                    "slide": item["slide"],
-                    "concept": item["text"],
-                    "visual_description": item["visual_description"]
-                })
+            for qa_pair in qa_pairs.split("\n\n"):
+                if qa_pair.startswith("Q:"):
+                    question = qa_pair.split("Q:")[1].split("A:")[0].strip()
+                    answer = qa_pair.split("A:")[1].strip()
+                    key_concepts.append({
+                        "concept": question,
+                        "explanation": answer
+                    })
             
             # Evaluate the explanation
             evaluation_prompt = f"""Evaluate how well the following explanation covers the key concepts from the lecture slides.

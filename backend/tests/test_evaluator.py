@@ -1,32 +1,24 @@
-import os
-import sys
-# Add the parent directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from app.evaluator import Evaluator
+import os
 
-def test_evaluator():
+def main():
     # Initialize the evaluator
     evaluator = Evaluator()
     
-    # Test data
+    # Test with the AI agents PDF
     course_content = {
-        "pdf_path": os.path.join("course_content", "ArtificialIntelligence_2_IntelligentAgents-2.pdf")
+        "pdf_path": "course_content/ArtificialIntelligence_2_IntelligentAgents-2.pdf"
     }
-    audio_file_path = "test_audio.mp3"  # You'll need to provide this file
+    
+    # Note: You'll need to provide an audio file path here
+    audio_file_path = "path_to_your_audio_file.mp3"  # Replace with actual audio file path
     
     try:
-        # Run the evaluation
         score, feedback = evaluator.evaluate(course_content, audio_file_path)
-        
-        # Print results
-        print("\n=== Evaluation Results ===")
-        print(f"Score: {score:.2f}")
-        print("\nFeedback:")
-        print(feedback)
-        
+        print(f"\nEvaluation Score: {score}")
+        print(f"\nFeedback:\n{feedback}")
     except Exception as e:
         print(f"Error during evaluation: {str(e)}")
 
 if __name__ == "__main__":
-    test_evaluator() 
+    main() 
