@@ -157,7 +157,6 @@ export default function Home() {
       const lecturesData: Lecture[] = [
         { id: '1', title: 'Machine Learning', concepts },
         { id: '3', title: 'Deep Learning', concepts },
-        { id: '4', title: 'Fundamentals of AI', concepts },
         { id: '6', title: 'Computer Vision', concepts },
         { id: '7', title: 'Natural Language Processing', concepts },
         { id: '8', title: 'Reinforcement Learning', concepts },
@@ -308,8 +307,7 @@ export default function Home() {
             <div className="h-16 relative">
               <PDFUploader 
                 onUploadSuccess={(message) => {
-                  alert(`Upload successful: ${message}`);
-                  // Here you can perform additional actions after successful upload
+                  setLectures([...lectures, { id: '4', title: 'Fundamentals of AI', concepts: lectures[0].concepts }]);
                 }}
                 onUploadError={(error) => {
                   alert(`Upload failed: ${error}`);
