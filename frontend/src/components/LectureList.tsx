@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { PDFUploader } from './PDFUploader';
 
 interface Concept {
   id: string;
@@ -20,28 +20,14 @@ interface LectureListProps {
 }
 
 export function LectureList({ lectures, onLectureSelect }: LectureListProps) {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const handleUploadSuccess = (message: string) => {
+    console.log('Upload success:', message);
+    // TODO: Handle successful upload
   };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    const pdfFiles = files.filter(file => file.type === 'application/pdf');
-    
-    if (pdfFiles.length > 0) {
-      // TODO: Handle PDF upload
-      console.log('PDF files:', pdfFiles);
-    }
+  const handleUploadError = (error: string) => {
+    console.error('Upload error:', error);
+    // TODO: Handle upload error
   };
 
   return (
@@ -74,22 +60,11 @@ export function LectureList({ lectures, onLectureSelect }: LectureListProps) {
             <Plus className="w-6 h-6 text-gray-500" />
           </div>
           
-          {/* Drag & Drop Side */}
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={cn(
-              "flex-1 h-full rounded-lg flex items-center justify-center transition-colors text-sm",
-              isDragging 
-                ? "bg-blue-50 border-2 border-dashed border-blue-500" 
-                : "bg-white border-2 border-dashed border-gray-300"
-            )}
-          >
-            <p className="font-handwriting text-gray-500">
-              Drop PDF here
-            </p>
-          </div>
+          {/* PDF Uploader Side */}
+          <PDFUploader 
+            onUploadSuccess={handleUploadSuccess}
+            onUploadError={handleUploadError}
+          />
         </div>
       </div>
     </div>

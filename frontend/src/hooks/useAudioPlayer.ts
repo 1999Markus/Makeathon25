@@ -57,3 +57,36 @@ export function useAudioPlayer() {
     error,
   };
 }
+
+/*
+EXAMPLE USAGE:
+import { useGrandmaSpeech } from '@/hooks/useGrandmaSpeech';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+
+function ExampleComponent() {
+  const { getSpeech, isLoading, error: fetchError } = useGrandmaSpeech();
+  const { play, stop, isPlaying, error: playError } = useAudioPlayer();
+
+  const handlePlay = async () => {
+    const audioBlob = await getSpeech('banana pancakes');
+    if (audioBlob) {
+      play(audioBlob);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <button onClick={handlePlay} disabled={isLoading || isPlaying}>
+        {isLoading ? 'Fetching Grandma...' : isPlaying ? 'Playing...' : 'Play Grandma'}
+      </button>
+      {isPlaying && (
+        <button onClick={stop} className="text-red-500 mt-2">
+          Stop
+        </button>
+      )}
+      {fetchError && <p className="text-red-600">Error fetching: {fetchError.message}</p>}
+      {playError && <p className="text-red-600">Error playing: {playError.message}</p>}
+    </div>
+  );
+}
+*/
