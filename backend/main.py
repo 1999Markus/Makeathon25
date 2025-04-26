@@ -2,11 +2,15 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from pydantic import BaseModel
+from app.slide_extractor_with_images import extract_key_concepts_and_generate_qa
+
 import os
+import shutil
+
 
 # Import the router from api.py
-from .app.api import router
-from .app.config import settings
+from app.api import router
+from app.config import settings
 
 # Create the main FastAPI app
 app = FastAPI(

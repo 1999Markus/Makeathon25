@@ -87,6 +87,7 @@ export default function Home() {
   const [grandmaEmotion, setGrandmaEmotion] = useState<GrandmaEmotion>('happy');
   const [isConceptsPanelOpen, setIsConceptsPanelOpen] = useState(false);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
+  const [taskProgress, setTaskProgress] = useState<number>(0);
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
@@ -142,7 +143,18 @@ export default function Home() {
 
   if (appState === 'welcome') {
     return (
-      <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center justify-center relative">
+        {/* Logo */}
+        <div className="absolute top-8 right-8 w-36 h-36">
+          <Image
+            src="/opa_ai_logo.png"
+            alt="OPA AI Logo"
+            fill
+            style={{ objectFit: 'contain' }}
+            priority
+          />
+        </div>
+        
         <div className="max-w-6xl w-full flex items-center gap-8">
           {/* Left side with Grandpa */}
           <div className="w-[400px] h-[400px] relative flex-shrink-0">
@@ -161,7 +173,7 @@ export default function Home() {
             <div className="relative bg-white p-6 rounded-3xl shadow-lg">
               <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
               <p className="text-3xl font-handwriting relative z-10">
-                Welcome back my dear! Choose a lecture you want to explain to me.
+                Welcome back, my dear! Choose a lecture you want to explain to me.
               </p>
             </div>
 
@@ -177,7 +189,18 @@ export default function Home() {
 
   if (appState === 'drawing') {
     return (
-      <div className="h-screen bg-[#e6f7ff] flex overflow-hidden">
+      <div className="h-screen bg-[#e6f7ff] flex overflow-hidden relative">
+        {/* Logo */}
+        <div className="absolute top-8 right-8 w-36 h-36 z-50">
+          <Image
+            src="/opa_ai_logo.png"
+            alt="OPA AI Logo"
+            fill
+            style={{ objectFit: 'contain' }}
+            priority
+          />
+        </div>
+
         {/* Main Content */}
         <div className="flex-1 flex flex-col p-8">
           {/* Back Navigation */}
@@ -192,8 +215,8 @@ export default function Home() {
             Back to lectures
           </button>
 
-          {/* Header and New Overview Box Container */}
-          <div className="relative mb-4">
+          {/* Header and New Overview Box Container - Moved higher */}
+          <div className="relative mt-4">
             {/* Existing Header (Lecture Title) */}
             <div className="flex items-center justify-between">
               <div className="text-gray-600 font-handwriting">
@@ -201,18 +224,18 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Concept Overview Box (Top Right) - With Navigation */}
-            <div className="absolute top-35 right-10 w-[400px] bg-white p-8 rounded-2xl shadow-lg flex items-center gap-4 z-20">
+            {/* Concept Overview Box (Top Middle) - With Navigation */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] bg-white p-6 rounded-2xl shadow-lg flex items-center gap-4 z-20">
               <button 
                 onClick={handlePreviousConcept} 
                 disabled={!canNavigateConcepts} 
                 className="p-1 text-purple-600 hover:text-purple-800 disabled:text-gray-300 disabled:cursor-not-allowed"
               >
-                <ArrowLeft className="w-6 h-6" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="text-center flex-1">
-                <div className="text-sm text-gray-500 font-sans mb-1">{selectedLecture?.title || "Lecture"}</div>
-                <div className="font-handwriting text-xl text-[#4285f4]">
+                <div className="text-xs text-gray-500 font-sans mb-1">{selectedLecture?.title || "Lecture"}</div>
+                <div className="font-handwriting text-lg text-[#4285f4]">
                   {selectedConcept?.title || "Concept"}
                 </div>
               </div>
@@ -221,7 +244,7 @@ export default function Home() {
                 disabled={!canNavigateConcepts} 
                 className="p-1 text-purple-600 hover:text-purple-800 disabled:text-gray-300 disabled:cursor-not-allowed"
               >
-                <ArrowLeft className="w-6 h-6 rotate-180" />
+                <ArrowLeft className="w-5 h-5 rotate-180" />
               </button>
             </div>
           </div>
@@ -234,9 +257,6 @@ export default function Home() {
                 {/* Speech bubble tail pointing right */}
                 <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-6 bg-white transform -translate-x-3 rotate-45" />
                 <div className="relative z-10">
-                  <p className="text-2xl font-handwriting text-[#20B2AA]">
-                    Grandpa:
-                  </p>
                   <p className="text-xl font-handwriting mt-2">
                     Please explain the concept of {selectedConcept?.title.toLowerCase() || 'this concept'} to me
                   </p>
@@ -263,28 +283,52 @@ export default function Home() {
               </div>
 
               {/* Drawing Canvas and Controls */}
-              <div className="w-[900px] mx-auto mt-[300px] relative">
-                {!isDrawingEnabled && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
-                    <button
-                      onClick={() => setIsDrawingEnabled(true)}
-                      className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
-                    >
-                      Start explaining to grandpa
-                    </button>
+              <div className="w-[900px] mx-auto mt-[300px] relative flex items-center">
+                <div className="flex-1">
+                  {!isDrawingEnabled && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
+                      <button
+                        onClick={() => setIsDrawingEnabled(true)}
+                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
+                      >
+                        Start explaining to grandpa
+                      </button>
+                    </div>
+                  )}
+                  <DrawingCanvas 
+                    isEnabled={isDrawingEnabled}
+                    onStart={() => {}}
+                    onCancel={() => {
+                      setIsDrawingEnabled(false);
+                    }}
+                    onDone={() => {
+                      setIsDrawingEnabled(false);
+                      setAppState('welcome');
+                    }}
+                  />
+                </div>
+
+                {/* Progress Bar - Positioned between canvas and right edge */}
+                <div className="absolute right-[-100px] top-[20px] bottom-[20px] w-20 bg-white/80 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center p-4 rounded-2xl">
+                  <div className="flex-1 w-3 bg-gray-100 rounded-full relative overflow-hidden">
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#4285f4]/20 to-transparent" />
+                    {/* Progress bar */}
+                    <div 
+                      className="absolute bottom-0 w-3 bg-gradient-to-t from-[#4285f4] to-[#34a853] rounded-full transition-all duration-500"
+                      style={{ height: `${taskProgress}%` }}
+                    />
+                    {/* Energy pulse effect */}
+                    <div 
+                      className="absolute bottom-0 w-3 h-1 bg-[#34a853] animate-pulse"
+                      style={{ bottom: `${taskProgress}%` }}
+                    />
                   </div>
-                )}
-                <DrawingCanvas 
-                  isEnabled={isDrawingEnabled}
-                  onStart={() => {}}
-                  onCancel={() => {
-                    setIsDrawingEnabled(false);
-                  }}
-                  onDone={() => {
-                    setIsDrawingEnabled(false);
-                    setAppState('welcome');
-                  }}
-                />
+                  <div className="mt-4 text-center">
+                    <span className="text-xl font-handwriting text-[#4285f4]">{taskProgress}%</span>
+                    <p className="text-xs text-gray-500 mt-1 font-sans">complete</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
