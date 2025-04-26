@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { uploadPDF } from '@/services/uploadPDFService';
+import { toast } from 'react-hot-toast';
 
 interface PDFUploaderProps {
   onUploadSuccess?: (message: string) => void;
@@ -33,13 +34,25 @@ export function PDFUploader({ onUploadSuccess, onUploadError }: PDFUploaderProps
     }
 
     setIsUploading(true);
+
+    const uploadToastId = toast.loading('Uploading PDF... 📄');
     try {
       const result = await uploadPDF(pdfFiles[0]);
+      toast.success(`File was successfully processed! 🎉`, {
+        id: uploadToastId, // Replace the loading toast
+      });
+
       onUploadSuccess?.(result.message);
     } catch (error) {
       if (error instanceof Error) {
+        toast.error('Failed to upload PDF. ❌', {
+          id: uploadToastId,
+        });
         onUploadError?.(error.message);
       } else {
+        toast.error('Failed to upload PDF. ❌', {
+          id: uploadToastId,
+        });
         onUploadError?.('An unknown error occurred');
       }
     } finally {
