@@ -31,11 +31,6 @@ os.makedirs(settings.temp_dir, exist_ok=True)
 # Include the router from api.py
 app.include_router(router, prefix="/api")
 
-@app.get("/")
-async def root():
-    return {"message": "AI Hackathon API is running!"}
-
-
 @app.post("/upload-pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
     """Endpoint to handle PDF uploads from frontend."""
@@ -77,3 +72,4 @@ async def root():
     # If running directly, start the application
 if __name__ == "__main__":
     import uvicorn
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
