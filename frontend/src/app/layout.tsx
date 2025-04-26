@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import "./globals.css";
+import {Toaster} from "react-hot-toast";
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -20,6 +20,16 @@ export default function RootLayout({
       </head>
       <body className={`${lexend.variable} antialiased`}>
         {children}
+        <Toaster
+            position="top-center"
+            toastOptions={{
+                duration: 3000,
+                style: {
+                    background: '#333',
+                    color: '#fff',
+                },
+            }}
+        />
       </body>
     </html>
   );
