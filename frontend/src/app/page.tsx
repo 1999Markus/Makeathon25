@@ -1,32 +1,147 @@
 "use client";
 
-import { useState } from "react";
-import { DrawingCanvas } from "@/components/DrawingCanvas";
+import { useState, useRef, useEffect } from "react";
+import { DrawingCanvas } from "../components/DrawingCanvas";
 import { GrandmaDisplay, type GrandmaEmotion } from "@/components/GrandmaDisplay";
 import { LectureList } from "@/components/LectureList";
 import Image from "next/image";
+import { ArrowLeft } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 type AppState = 'welcome' | 'lectureSelect' | 'drawing';
+
+interface Concept {
+  id: string;
+  title: string;
+  description: string;
+}
 
 interface Lecture {
   id: string;
   title: string;
+  concepts: Concept[];
 }
+
+// Dummy data for lectures and their concepts
+const LECTURES: Lecture[] = [
+  {
+    id: '1',
+    title: 'Machine Learning Lecture I',
+    concepts: [
+      { id: '1-1', title: 'Linear Classification', description: 'How to separate data points with a line' },
+      { id: '1-2', title: 'Gradient Descent', description: 'Finding the minimum of a function step by step' },
+      { id: '1-3', title: 'Overfitting', description: 'When your model learns the noise in the data' },
+    ]
+  },
+  {
+    id: '2',
+    title: 'Machine Learning Lecture II',
+    concepts: [
+      { id: '2-1', title: 'Decision Trees', description: 'Making decisions by asking yes/no questions' },
+      { id: '2-2', title: 'Random Forests', description: 'Combining multiple decision trees' },
+      { id: '2-3', title: 'Cross Validation', description: 'Testing your model on different data splits' },
+    ]
+  },
+  {
+    id: '3',
+    title: 'Deep Learning',
+    concepts: [
+      { id: '3-1', title: 'Neural Networks', description: 'Brain-inspired learning machines' },
+      { id: '3-2', title: 'Backpropagation', description: 'How neural networks learn from mistakes' },
+      { id: '3-3', title: 'Activation Functions', description: 'Adding non-linearity to networks' },
+    ]
+  },
+  {
+    id: '4',
+    title: 'Fundamentals of AI',
+    concepts: [
+      { id: '4-1', title: 'Search Algorithms', description: 'Finding paths in a maze of possibilities' },
+      { id: '4-2', title: 'Expert Systems', description: 'Making decisions based on rules' },
+      { id: '4-3', title: 'Game Theory', description: 'Strategic decision making' },
+    ]
+  },
+  {
+    id: '5',
+    title: 'Neural Networks',
+    concepts: [
+      { id: '5-1', title: 'Perceptrons', description: 'The building blocks of neural networks' },
+      { id: '5-2', title: 'Hidden Layers', description: 'Adding depth to neural networks' },
+      { id: '5-3', title: 'Weight Initialization', description: 'Starting your network right' },
+    ]
+  },
+  {
+    id: '6',
+    title: 'Computer Vision',
+    concepts: [
+      { id: '6-1', title: 'Convolution', description: 'Finding patterns in images' },
+      { id: '6-2', title: 'Pooling', description: 'Summarizing image features' },
+      { id: '6-3', title: 'Object Detection', description: 'Finding things in images' },
+    ]
+  },
+  {
+    id: '7',
+    title: 'Natural Language Processing',
+    concepts: [
+      { id: '7-1', title: 'Tokenization', description: 'Breaking text into pieces' },
+      { id: '7-2', title: 'Word Embeddings', description: 'Representing words as numbers' },
+      { id: '7-3', title: 'Attention', description: 'Focusing on important words' },
+    ]
+  },
+  {
+    id: '8',
+    title: 'Reinforcement Learning',
+    concepts: [
+      { id: '8-1', title: 'Q-Learning', description: 'Learning from rewards and punishments' },
+      { id: '8-2', title: 'Policy Gradients', description: 'Learning how to act directly' },
+      { id: '8-3', title: 'Exploration vs Exploitation', description: 'Trying new things vs sticking to what works' },
+    ]
+  },
+];
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('welcome');
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
+  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const [grandmaEmotion, setGrandmaEmotion] = useState<GrandmaEmotion>('happy');
+  const [isConceptsPanelOpen, setIsConceptsPanelOpen] = useState(false);
+
+  // Ref for the panel to handle click outside
+  const conceptsPanelRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (isConceptsPanelOpen &&
+          conceptsPanelRef.current &&
+          !conceptsPanelRef.current.contains(event.target as Node) &&
+          toggleButtonRef.current &&
+          !toggleButtonRef.current.contains(event.target as Node)) {
+        setIsConceptsPanelOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isConceptsPanelOpen]);
 
   const handleLectureSelect = (lecture: Lecture) => {
     setSelectedLecture(lecture);
+    setSelectedConcept(null);
     setAppState('drawing');
+  };
+
+  const handleConceptSelect = (concept: Concept) => {
+    setSelectedConcept(concept);
+    setIsConceptsPanelOpen(false); // Close panel after selection
   };
 
   if (appState === 'welcome') {
     return (
       <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center justify-center">
-        <div className="max-w-4xl w-full flex items-start">
+        <div className="max-w-4xl w-full flex items-center gap-8">
           {/* Left side with Grandma */}
           <div className="w-[400px] h-[400px] relative flex-shrink-0">
             <Image
@@ -39,9 +154,9 @@ export default function Home() {
           </div>
           
           {/* Right side with speech bubble and button */}
-          <div className="flex-1 flex flex-col gap-8 ml-4">
+          <div className="flex-1 flex flex-col gap-8">
             {/* Speech Bubble */}
-            <div className="relative bg-white p-6 rounded-3xl shadow-lg mt-8">
+            <div className="relative bg-white p-6 rounded-3xl shadow-lg">
               <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
               <p className="text-3xl font-handwriting relative z-10">
                 Welcome back my dear. Let's get it started!
@@ -63,47 +178,181 @@ export default function Home() {
 
   if (appState === 'lectureSelect') {
     return (
-      <div className="min-h-screen bg-[#e6f7ff] p-8 flex">
-        <div className="w-[400px] h-[400px] relative flex-shrink-0">
-          <Image
-            src="/happy_grandma.png"
-            alt="Happy Grandma"
-            fill
-            style={{ objectFit: 'contain' }}
-            priority
-          />
+      <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center">
+        {/* Left side with Grandma and Back Button */}
+        <div className="w-[400px] flex-shrink-0 flex flex-col items-center">
+          <div className="w-[400px] h-[400px] relative">
+            <Image
+              src="/happy_grandma.png"
+              alt="Happy Grandma"
+              fill
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </div>
+          <button
+            onClick={() => setAppState('welcome')}
+            className="mt-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to start
+          </button>
         </div>
         
-        <div className="flex-1 ml-4">
-          <LectureList onLectureSelect={handleLectureSelect} />
+        {/* Right side with speech bubble and content */}
+        <div className="flex-1 ml-8">
+          <div className="bg-white rounded-3xl shadow-lg p-6 relative">
+            {/* Speech bubble arrow */}
+            <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
+            
+            {/* Content container */}
+            <div className="relative z-10">
+              {/* Fixed header */}
+              <p className="text-3xl font-handwriting mb-6">
+                Choose a lecture you want to explain to me
+              </p>
+              
+              {/* Scrollable lecture list */}
+              <LectureList onLectureSelect={handleLectureSelect} lectures={LECTURES} />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-8">
-      <div className="max-w-6xl w-full text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">
-          {selectedLecture?.title || "Concept to Explain"}
-        </h1>
-      </div>
-      
-      <div className="flex gap-8 justify-center items-start w-full max-w-6xl">
-        <div className="flex-1">
-          <DrawingCanvas 
-            isEnabled={true}
-            onStart={() => {}}
-            onCancel={() => setAppState('lectureSelect')}
-          />
+    <div className="min-h-screen bg-[#e6f7ff] flex">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col p-8">
+        {/* Back Navigation */}
+        <button
+          onClick={() => setAppState('lectureSelect')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl mb-8"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to lectures
+        </button>
+
+        {/* Main Drawing Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Content Area */}
+          <div className="flex-1 flex flex-col max-w-[1200px] mx-auto">
+            {/* Header with Course and Concept */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="text-gray-600 font-handwriting">
+                {selectedLecture?.title || "Machine Learning I"}
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="font-handwriting text-[#4285f4]">
+                  Concept: {selectedConcept?.title || "Linear Classification"}
+                </div>
+                <button className="p-2">
+                  <ArrowLeft className="w-5 h-5 rotate-180" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Content Area with Speech Bubble and Drawing */}
+            <div className="flex gap-8 mt-12">
+              {/* Left Side - Speech Bubble */}
+              <div className="w-[400px] flex-shrink-0">
+                <div className="bg-white p-6 rounded-3xl shadow-lg">
+                  <p className="text-2xl font-handwriting text-[#20B2AA]">
+                    Granny:
+                  </p>
+                  <p className="text-xl font-handwriting mt-2">
+                    Please explain the concept of linear classification to me
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side - Drawing Area with Grandma */}
+              <div className="flex-1 relative">
+                {/* Grandma Image - Above the canvas */}
+                <div className="w-[600px] h-[200px] mx-auto mb-2">
+                  <div className="relative w-full h-full">
+                    <Image
+                      src="/leaningforward_grandma.png"
+                      alt="Grandma leaning forward"
+                      fill
+                      style={{ 
+                        objectFit: 'contain',
+                        objectPosition: 'center bottom'
+                      }}
+                      priority
+                    />
+                  </div>
+                </div>
+
+                {/* Drawing Canvas and Controls */}
+                <div className="w-[800px] mx-auto">
+                  <DrawingCanvas 
+                    isEnabled={true}
+                    onStart={() => {}}
+                    onCancel={() => setSelectedConcept(null)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div className="w-[300px] flex flex-col">
-          <div className="h-[45px]" />
-          <GrandmaDisplay 
-            emotion={grandmaEmotion}
-            onEmotionChange={setGrandmaEmotion}
-          />
+      </div>
+
+      {/* Toggle Button for Concepts Panel */}
+      <button
+        ref={toggleButtonRef}
+        onClick={() => setIsConceptsPanelOpen(!isConceptsPanelOpen)}
+        className={cn(
+          "fixed right-0 top-1/2 -translate-y-1/2 bg-[#4285f4] text-white p-2 rounded-l-xl transition-transform z-20",
+          isConceptsPanelOpen && "translate-x-[300px]"
+        )}
+      >
+        <ArrowLeft className={cn(
+          "w-6 h-6 transition-transform",
+          isConceptsPanelOpen && "rotate-180"
+        )} />
+      </button>
+
+      {/* Right Side Panel - Concepts */}
+      <div
+        ref={conceptsPanelRef}
+        className={cn(
+          "fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-10",
+          isConceptsPanelOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="p-4 bg-[#4285f4] text-white">
+          <h2 className="font-handwriting text-xl text-center">Choose what to explain</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-1 gap-2">
+            {selectedLecture?.concepts.map((concept) => (
+              <button
+                key={concept.id}
+                onClick={() => handleConceptSelect(concept)}
+                className={cn(
+                  "text-left p-3 rounded-lg transition-colors",
+                  selectedConcept?.id === concept.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-50 hover:bg-gray-100"
+                )}
+              >
+                <h3 className="text-lg font-handwriting mb-0.5">{concept.title}</h3>
+                <p className={cn(
+                  "text-sm",
+                  selectedConcept?.id === concept.id
+                    ? "text-blue-50"
+                    : "text-gray-600"
+                )}>
+                  {concept.description}
+                </p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
