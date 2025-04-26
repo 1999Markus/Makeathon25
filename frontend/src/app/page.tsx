@@ -144,11 +144,11 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center justify-center">
         <div className="max-w-6xl w-full flex items-center gap-8">
-          {/* Left side with Grandma */}
+          {/* Left side with Grandpa */}
           <div className="w-[400px] h-[400px] relative flex-shrink-0">
             <Image
-              src="/happy_grandma.png"
-              alt="Happy Grandma"
+              src="/a_opa_veryhappy_.png"
+              alt="Very Happy Grandpa"
               fill
               style={{ objectFit: 'contain' }}
               priority
@@ -235,7 +235,7 @@ export default function Home() {
                 <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-6 bg-white transform -translate-x-3 rotate-45" />
                 <div className="relative z-10">
                   <p className="text-2xl font-handwriting text-[#20B2AA]">
-                    Granny:
+                    Grandpa:
                   </p>
                   <p className="text-xl font-handwriting mt-2">
                     Please explain the concept of {selectedConcept?.title.toLowerCase() || 'this concept'} to me
@@ -246,12 +246,12 @@ export default function Home() {
 
             {/* Drawing Area Container */}
             <div className="relative flex flex-col items-center">
-              {/* Grandma Image */}
+              {/* Grandpa Image */}
               <div className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-10">
                 <div className="relative w-full h-full">
                   <Image
-                    src="/leaningforward_grandma.png"
-                    alt="Grandma leaning forward"
+                    src="/a_opa_mediumhappy.png"
+                    alt="Grandpa leaning forward"
                     fill
                     style={{ 
                       objectFit: 'contain',
@@ -270,7 +270,7 @@ export default function Home() {
                       onClick={() => setIsDrawingEnabled(true)}
                       className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
                     >
-                      Start explaining to granny
+                      Start explaining to grandpa
                     </button>
                   </div>
                 )}
