@@ -217,14 +217,8 @@ async def get_key_concepts():
     Get the key concepts for the hardcoded course.
     """
     concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
-
     key_concepts = []
-    for _, row in concepts.head(10).iterrows():
-        key_concepts.append({
-            "id": row[0],
-            "concept": row[1],
-            "question": row[2],
-            "answer": row[3],
-        })
+    for tuples in concepts.head(10).itertuples():
+        key_concepts.append(tuples[0]) # row[0] here is a tuple, DON'T CHANGE THIS
 
     return key_concepts

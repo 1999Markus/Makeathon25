@@ -70,7 +70,12 @@ export default function Home() {
   useEffect(() => {
     async function fetchConcepts() {
       try {
-        const response = await fetch('https://localhost:8000/get-key-concepts');
+        const response = await fetch('http://localhost:8000/api/get-key-concepts', {
+          method: 'GET',
+          headers: {
+              'Accept': 'application/json',
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch concepts');
         }

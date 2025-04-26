@@ -7,7 +7,7 @@ export interface KeyConcept {
 
 export const fetchKeyConcepts = async (): Promise<KeyConcept[]> => {
     try {
-        const response = await fetch('https://localhost:8000/get-key-concepts', {
+        const response = await fetch('http://localhost:8000/api/get-key-concepts', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
