@@ -22,11 +22,6 @@ if not os.getenv("OPENAI_API_KEY"):
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# List available models
-print("Available models:")
-models = client.models.list()
-for model in models:
-    print(f"- {model.id}")
 
 def extract_text_and_images_from_pdf(file_path):
     """Extract text and images from a PDF."""

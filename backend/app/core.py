@@ -114,8 +114,8 @@ def read_and_transcribe_audio(client: OpenAI, audio_file_path: str) -> str:
 
 
 def process_audio_image_chain(
-    client: OpenAI, audio_url: str, image_url: str, output_path: str = "speech.mp3"
-) -> tuple[str, str, str]:
+    client: OpenAI, audio_url: str, image_url: str, output_audio_path: str = "speech.mp3"
+) -> tuple[str, str]:
     """
     Process the user's explanation and generate grandma's response.
 
@@ -126,7 +126,7 @@ def process_audio_image_chain(
         output_path: Path to save grandma's audio response
 
     Returns:
-        tuple containing (transcription, feedback, output_path)
+        tuple containing (feedback, output_path)
     """
     # Download and save audio file
     response = requests.get(audio_url)
@@ -137,7 +137,7 @@ def process_audio_image_chain(
     # Process chain
     transcription = transcribe_speech_input(client, "temp_audio.wav")
     feedback = analyze_image(client, transcription, image_url)
-    generate_answer_audio(client, feedback, output_path)
+    generate_answer_audio(client, feedback, output_audio_path)
 
-    return transcription, feedback, output_path
+    return feedback, output_audio_path
 
