@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Pen, Eraser, Trash2, Mic } from 'lucide-react';
+import {uploadAndPlayAudio} from "@/services/uploadService";
 
 // Canvas background color constant
 const CANVAS_BACKGROUND_COLOR = '#333333';
@@ -9,9 +10,10 @@ interface DrawingCanvasProps {
   onStart: () => void;
   onCancel: () => void;
   onDone: () => void;
+  concept: string;
 }
 
-export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone }: DrawingCanvasProps) {
+export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -75,7 +77,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone }: DrawingC
       
       // Create MediaRecorder for recording audio
       const recorder = new MediaRecorder(audioStream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') 
+        mimeType: MediaRecorder.isTypeSupported('audio/webm')
           ? 'audio/webm' : 'audio/mp3'
       });
       
@@ -109,144 +111,6 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone }: DrawingC
     } catch (error) {
       console.error("Error initializing audio:", error);
       alert("Could not access microphone. Please check permissions.");
-    }
-  };
-  
-  // Save recorded audio
-  const saveRecordedAudio = () => {
-    if (audioChunksRef.current.length === 0) {
-      console.log("No audio data to save");
-      return;
-    }
-    
-    try {
-      // Create blob from recorded chunks
-      const audioBlob = new Blob(audioChunksRef.current, { 
-        type: mediaRecorderRef.current?.mimeType || 'audio/webm' 
-      });
-      
-      // Convert to WAV using Audio Context
-      convertToWav(audioBlob);
-      
-    } catch (error) {
-      console.error("Error saving audio:", error);
-      alert("Failed to save audio recording");
-    }
-  };
-  
-  // Convert audio blob to WAV format
-  const convertToWav = async (audioBlob: Blob) => {
-    try {
-      // Create file reader to convert blob to array buffer
-      const reader = new FileReader();
-      
-      reader.onload = async (event) => {
-        if (!event.target?.result) {
-          throw new Error("Failed to read audio data");
-        }
-        
-        // Create audio context
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        const audioCtx = new AudioContext();
-        
-        // Decode audio data from the blob
-        const arrayBuffer = event.target.result as ArrayBuffer;
-        
-        // Decode the audio
-        audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
-          // Convert AudioBuffer to WAV
-          const wav = audioBufferToWav(buffer);
-          
-          // Create blob from WAV data
-          const wavBlob = new Blob([wav], { type: 'audio/wav' });
-          
-          // Create and trigger download
-          const audioUrl = URL.createObjectURL(wavBlob);
-          const link = document.createElement('a');
-          link.href = audioUrl;
-          link.download = `explanation_recording_${new Date().toISOString().replace(/[:.]/g, '-')}.wav`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // Clean up
-          setTimeout(() => URL.revokeObjectURL(audioUrl), 100);
-          audioCtx.close();
-          
-          console.log("Audio saved as WAV successfully");
-        }, (error) => {
-          console.error("Error decoding audio data:", error);
-          alert("Failed to convert audio to WAV format");
-        });
-      };
-      
-      // Start reading the blob as array buffer
-      reader.readAsArrayBuffer(audioBlob);
-      
-    } catch (error) {
-      console.error("Error converting to WAV:", error);
-      alert("Failed to convert to WAV format");
-    }
-  };
-  
-  // Helper function to convert AudioBuffer to WAV format
-  const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
-    // Get channel data
-    const numOfChannels = buffer.numberOfChannels;
-    const length = buffer.length * numOfChannels * 2; // 2 bytes per sample (16-bit)
-    const sampleRate = buffer.sampleRate;
-    
-    // Create buffer for WAV file
-    const buffer16Bit = new ArrayBuffer(44 + length);
-    const view = new DataView(buffer16Bit);
-    
-    // WAV header
-    // "RIFF" chunk descriptor
-    writeString(view, 0, 'RIFF');
-    view.setUint32(4, 36 + length, true); // ChunkSize
-    writeString(view, 8, 'WAVE');
-    
-    // "fmt " sub-chunk
-    writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-    view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-    view.setUint16(22, numOfChannels, true); // NumChannels
-    view.setUint32(24, sampleRate, true); // SampleRate
-    view.setUint32(28, sampleRate * numOfChannels * 2, true); // ByteRate
-    view.setUint16(32, numOfChannels * 2, true); // BlockAlign
-    view.setUint16(34, 16, true); // BitsPerSample
-    
-    // "data" sub-chunk
-    writeString(view, 36, 'data');
-    view.setUint32(40, length, true); // Subchunk2Size
-    
-    // Write audio data
-    let offset = 44;
-    let channelData: Float32Array[] = [];
-    
-    // Get channel data arrays
-    for (let i = 0; i < numOfChannels; i++) {
-      channelData[i] = buffer.getChannelData(i);
-    }
-    
-    // Interleave channel data and convert to 16-bit PCM
-    for (let i = 0; i < buffer.length; i++) {
-      for (let channel = 0; channel < numOfChannels; channel++) {
-        // Convert float range -1.0 to 1.0 into 16-bit PCM
-        const sample = Math.max(-1, Math.min(1, channelData[channel][i]));
-        const value = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-        view.setInt16(offset, value, true);
-        offset += 2;
-      }
-    }
-    
-    return buffer16Bit;
-  };
-  
-  // Helper function to write string to DataView
-  const writeString = (view: DataView, offset: number, string: string) => {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
     }
   };
 
@@ -458,12 +322,44 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone }: DrawingC
     onCancel();
   };
 
-  const handleDone = () => {
-    // Save audio recording before stopping
-    saveRecordedAudio();
-    
-    // Continue with original done action
-    onDone();
+  const handleDone = async () => {
+    try {
+      if (!canvasRef.current) {
+        console.error("Canvas ref missing");
+        return;
+      }
+
+      // Stop and save audio recording first
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+
+      // Wait a short time to ensure data is available
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Create the audio File
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: mediaRecorderRef.current?.mimeType || 'audio/webm'
+      });
+      const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: audioBlob.type });
+
+      // Create the image File
+      const canvas = canvasRef.current;
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp'));
+      if (!blob) {
+        console.error("Failed to create image blob");
+        return;
+      }
+      const imageFile = new File([blob], `drawing_${Date.now()}.webp`, { type: blob.type });
+
+      // Upload using your service
+      await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
+
+      // Continue with original done action
+      onDone();
+    } catch (error) {
+      console.error("Error handling done:", error);
+    }
   };
 
   return (

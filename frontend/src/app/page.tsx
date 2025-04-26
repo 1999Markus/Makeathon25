@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { DrawingCanvas } from "../components/DrawingCanvas";
-import { GrandmaDisplay, type GrandmaEmotion } from "@/components/GrandmaDisplay";
 import { LectureList } from "@/components/LectureList";
 import Image from "next/image";
 import { ArrowLeft } from 'lucide-react';
@@ -84,7 +83,6 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>('welcome');
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
-  const [grandmaEmotion, setGrandmaEmotion] = useState<GrandmaEmotion>('happy');
   const [isConceptsPanelOpen, setIsConceptsPanelOpen] = useState(false);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [taskProgress, setTaskProgress] = useState<number>(0);
@@ -305,6 +303,7 @@ export default function Home() {
                       setIsDrawingEnabled(false);
                       setAppState('welcome');
                     }}
+                    concept={selectedConcept?.title || 'Selected Concept is null'}
                   />
                 </div>
 
