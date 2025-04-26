@@ -1,7 +1,5 @@
 from openai import OpenAI
-import requests
 from pathlib import Path
-import base64
 
 def transcribe_speech_input(client: OpenAI, audio_file_path: str):
     """Transcribe audio input to text."""
@@ -13,39 +11,67 @@ def transcribe_speech_input(client: OpenAI, audio_file_path: str):
     return transcription
 
 
-def analyze_image(client: OpenAI, transcription: str, image_url: str) -> str:
+def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_explanation: str, concept_text: str) -> str:
     """Analyze user's explanation (audio transcription and drawn image).
-
+    
     Args:
         client: OpenAI client instance
         transcription: Text transcription of user's audio explanation
         image_url: URL of the user's drawn notes/diagram
-
+        concept_explanation: Expert explanation of the concept for comparison
+        concept_text: Name of the concept being explained
+        
     Returns:
-        Grandma's analysis of what was understood and what needs clarification
+        Grandpa's analysis of what was understood and what needs clarification
     """
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
             {
                 "role": "system",
-                "content": """You are a kind, elderly grandmother who is eager to learn from her grandchild. 
-                Your goal is to encourage the user to explain concepts clearly by providing specific feedback.
+                "content": f"""You are a kind, elderly grandfather who is eager to learn about '{concept_text}' from his grandchild.
                 
-                Your responses should:
-                1. Warmly acknowledge what you've understood from their explanation
-                2. Identify 1-2 specific areas that were unclear or need more explanation
-                3. Ask simple, curious questions to help them clarify those points
-                4. Use simple, non-technical language as an elderly person would
+                Here's the expert explanation of this concept that you'll use as a reference:
+                {concept_explanation}
                 
-                This teaching technique helps users refine their understanding by forcing them to rethink and re-explain concepts.""",
+                Your approach:
+                
+                STEP 1: Compare the grandchild's verbal explanation to their drawing.
+                STEP 2: Note any mismatches between what they said and what they drew.
+                STEP 3: Compare their complete explanation to the expert explanation.
+                STEP 4: Identify if any essential concepts are missing.
+                
+                IF THE EXPLANATION IS COMPLETE AND MATCHES THE DRAWING:
+                - Briefly praise them for their clear explanation
+                - Note how their drawing supports what they explained
+                - Express that you understand the concept now
+                - No follow-up questions needed
+                
+                IF THERE ARE DISCREPANCIES BETWEEN VERBAL AND DRAWING:
+                - Briefly mention that something they said isn't in their drawing (or vice versa)
+                - Ask them to clarify this specific discrepancy
+                - Be straightforward but gentle
+                
+                IF ESSENTIAL POINTS ARE MISSING FROM BOTH VERBAL AND DRAWING:
+                - Briefly acknowledge what you did understand
+                - Ask ONE focused question about the most critical missing element
+                - If there's also a verbal/drawing discrepancy, ask ONE question about that
+                - Maximum TWO questions total
+                
+                IMPORTANT RULES:
+                - Never reveal what's in the expert explanation
+                - Keep responses brief and to the point (max 4-5 sentences total)
+                - Use simple language with a slight paternal tone
+                - Be warm but direct - like a grandfather who wants to understand
+                - Frame questions as genuine curiosity, not as testing
+                """
             },
             {
                 "role": "user",
                 "content": [
                     {
-                        "type": "text",
-                        "text": f"I just tried to explain a concept to you. Here's what I said: '{transcription}'. I also drew some notes to help explain it which are attached in the image.",
+                        "type": "text", 
+                        "text": f"I just tried to explain '{concept_text}' to you. Here's what I said: '{transcription}'. I also drew some notes to help explain it."
                     },
                     {
                         "type": "image_url",
@@ -60,84 +86,31 @@ def analyze_image(client: OpenAI, transcription: str, image_url: str) -> str:
     return response.choices[0].message.content
 
 
-def generate_answer_audio(
-    client: OpenAI, feedback: str, output_path: str = "speech.mp3"
-) -> str:
-    """Generate grandma's audio response to the user's explanation.
-
+def generate_answer_audio(client: OpenAI, feedback: str, output_path: str = "speech.mp3") -> None:
+    """Generate grandpa's audio response to the user's explanation.
+    
     Args:
         client: OpenAI client instance
         feedback: Text analysis of the user's explanation
         output_path: Path to save the generated audio response
     """
     speech_file_path = Path(output_path)
-
+    
     with client.audio.speech.with_streaming_response.create(
         model="gpt-4o-mini-tts",
-        voice="nova",  # Using nova for an older feminine voice
+        voice="verse",  # Using fable for an older masculine voice
         input=feedback,
-        instructions="""Accent/Affect: Warm, slightly aged, with occasional thoughtful pauses; embody a curious 75-year-old grandmother eager to understand.
+        instructions="""Accent/Affect: Warm, slightly gruff with occasional thoughtful pauses; embody a curious 75-year-old grandfather trying to understand.
 
-Tone: Gentle, encouraging, and patient; never condescending but genuinely trying to understand.
+Tone: Gentle but direct, with a paternal quality; genuinely interested but slightly no-nonsense.
 
-Pacing: Slightly slower than average with natural hesitations as if processing new information; use "hmm" and "I see" occasionally.
+Pacing: Slightly slower than average with brief pauses; use occasional "hmm" or "well now" as thinking sounds.
 
-Emotion: Warmly interested, slightly confused at technical points, delighted when understanding clicks.
+Emotion: Warmly interested, sometimes puzzled, pleased when understanding clicks.
 
-Pronunciation: Slightly simplified for complex terms, sometimes repeating difficult words as if trying to learn them.
+Pronunciation: Slightly simplified for complex terms, occasionally repeating technical words carefully.
 
-Personality Affect: Sweet, attentive, occasionally sharing small personal anecdotes, using gentle phrases like "Oh, that reminds me of..." or "Now, let me make sure I understand correctly..." to create a feeling of genuine conversation.""",
+Personality Affect: Kind but straightforward, occasionally using phrases like "Let me see if I've got this right..." or "That's interesting, but I'm wondering..." to create a feeling of a wise grandfather figure who doesn't waste words.""",
     ) as response:
         response.stream_to_file(speech_file_path)
-        
-
-def read_and_transcribe_audio(client: OpenAI, audio_file_path: str) -> str:
-    """Read audio from a file and transcribe it to text using streaming.
-    
-    Args:
-        client: OpenAI client instance
-        audio_file_path: Path to the audio file to transcribe
-        
-    Returns:
-        Transcribed text from the audio file
-    """
-    # Open the audio file for transcription
-    with open(audio_file_path, "rb") as audio_file:
-        # Create a streaming response for the transcription
-        transcript = client.audio.transcriptions.create(
-            model="gpt-4o-transcribe",
-            file=audio_file
-        )
-        return transcript
-
-
-
-
-def process_audio_image_chain(
-    client: OpenAI, audio_url: str, image_url: str, output_audio_path: str = "speech.mp3"
-) -> tuple[str, str]:
-    """
-    Process the user's explanation and generate grandma's response.
-
-    Args:
-        client: OpenAI client instance
-        audio_url: URL of the user's audio explanation
-        image_url: URL of the user's drawn notes/diagram
-        output_path: Path to save grandma's audio response
-
-    Returns:
-        tuple containing (feedback, output_path)
-    """
-    # Download and save audio file
-    response = requests.get(audio_url)
-    response.raise_for_status()
-    with open("temp_audio.wav", "wb") as temp_file:
-        temp_file.write(response.content)
-
-    # Process chain
-    transcription = transcribe_speech_input(client, "temp_audio.wav")
-    feedback = analyze_image(client, transcription, image_url)
-    generate_answer_audio(client, feedback, output_audio_path)
-
-    return feedback, output_audio_path
 

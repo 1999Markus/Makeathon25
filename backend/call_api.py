@@ -20,7 +20,7 @@ def call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path):
     url = f"{base_url}/ask-follow-up"
     
     # Prepare form data
-    form_data = {"concept": concept}
+    form_data = {"concept_id": concept}
     
     # Prepare files
     files = {
@@ -49,9 +49,9 @@ def call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path):
 def main():
     # Example usage
     base_url = "http://localhost:8000/api"
-    concept = "Neural Networks"
-    audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/backend/app/sample_audio.wav"
-    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/backend/tests/pexels-lazybird-1212600.jpg"
+    concept = "1"
+    audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/example_explanation.wav"
+    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/bad_example_notepad.jpg"
     
     # Call the API
     response = call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path)
@@ -64,9 +64,9 @@ def main():
         # Optionally, save the audio data to a file
         audio_data = response.get('audio_data')
         if audio_data:
-            with open("response_audio.mp3", "wb") as audio_file:
+            with open("grandma_response.mp3", "wb") as audio_file:
                 audio_file.write(base64.b64decode(audio_data))
-            print("Response audio saved to response_audio.mp3")
+            print("Response audio saved to grandma_response.mp3")
 
 
 if __name__ == "__main__":

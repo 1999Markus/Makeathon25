@@ -2,11 +2,13 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 import os
 import uuid
 from pydantic import BaseModel
-from .core import analyze_image, generate_answer_audio, read_and_transcribe_audio
+from .core import analyze_image, generate_answer_audio, transcribe_speech_input
 from openai import OpenAI
 from .evaluator import Evaluator
 import base64
 from .config import settings
+import traceback
+import pandas as pd
 
 # Create router instead of app
 router = APIRouter()
@@ -80,9 +82,80 @@ async def extract_content(pdf_file: UploadFile = File(...)):
              
 """
 
+def process_follow_up(client, audio_path, image_path, concept_explanation, concept_text):
+    """
+    Process a follow-up question with audio and image data.
+    
+    Args:
+        client: OpenAI client instance
+        audio_path: Path to the temporary audio file
+        image_path: Path to the temporary image file
+        concept_explanation: The explanation of the concept
+    Returns:
+        tuple: (feedback, audio_output_path)
+    """
+    audio_output_path = None
+    try:
+        # Convert image to base64 for OpenAI API
+        print("Converting image to base64...")
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+            base64_image = base64.b64encode(image_data).decode("utf-8")
+            image_url = f"data:image/jpeg;base64,{base64_image}"
+        print("Image encoded as base64 for API")
+        
+        # Process the audio to get transcription
+        print("Processing audio transcription...")
+        transcription = transcribe_speech_input(client, audio_path)
+        print("Transcription completed")
+        
+        # Analyze the image with audio transcription
+        print("Analyzing image with transcription...")
+        feedback = analyze_image(client, transcription, image_url, concept_explanation, concept_text)
+        print("Analysis completed")
+        
+        # Generate audio response
+        print("Generating audio response...")
+        audio_output_path = f"temp_response_{uuid.uuid4()}.mp3"
+        generate_answer_audio(client, feedback, audio_output_path)
+        print(f"Audio response generated at {audio_output_path}")
+        
+        return feedback, audio_output_path
+    except Exception as e:
+        print(f"ERROR in process_follow_up: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        # Clean up output path if it was created
+        if audio_output_path and os.path.exists(audio_output_path):
+            try:
+                os.remove(audio_output_path)
+            except:
+                pass
+        raise e
+    
+async def save_uploaded_files(audio_file, notepad):
+    # Save audio file temporarily
+    print("Saving audio file temporarily...")
+    audio_path = f"temp_audio_{uuid.uuid4()}.wav"
+    with open(audio_path, "wb") as f:
+        audio_content = await audio_file.read()
+        print(f"Read {len(audio_content)} bytes from audio file")
+        f.write(audio_content)
+    print(f"Audio file saved to {audio_path}")
+    
+    # Save notepad image temporarily
+    print("Saving notepad image temporarily...")
+    image_path = f"temp_image_{uuid.uuid4()}.jpg"
+    with open(image_path, "wb") as f:
+        image_content = await notepad.read()
+        print(f"Read {len(image_content)} bytes from notepad image")
+        f.write(image_content)
+    print(f"Notepad image saved to {image_path}")
+
+    return audio_path, image_path
+
 @router.post("/ask-follow-up")
 async def ask_follow_up(
-    concept: str = Form(...),
+    concept_id: str = Form(...),
     audio_file: UploadFile = File(...),
     notepad: UploadFile = File(...)
 ):
@@ -99,7 +172,7 @@ async def ask_follow_up(
     """
 
     # Log that the function was called
-    print(f"ask_follow_up function called with concept: {concept}")
+    print(f"ask_follow_up function called with concept: {concept_id}")
     print(f"Audio file: {audio_file.filename}, Notepad file: {notepad.filename}")
     
     # Create OpenAI client
@@ -113,46 +186,19 @@ async def ask_follow_up(
     audio_output_path = None
     
     try:
-        # Save audio file temporarily
-        print("Saving audio file temporarily...")
-        audio_path = f"temp_audio_{uuid.uuid4()}.wav"
-        with open(audio_path, "wb") as f:
-            audio_content = await audio_file.read()
-            print(f"Read {len(audio_content)} bytes from audio file")
-            f.write(audio_content)
-        print(f"Audio file saved to {audio_path}")
-        
-        # Save notepad image temporarily
-        print("Saving notepad image temporarily...")
-        image_path = f"temp_image_{uuid.uuid4()}.jpg"
-        with open(image_path, "wb") as f:
-            image_content = await notepad.read()
-            print(f"Read {len(image_content)} bytes from notepad image")
-            f.write(image_content)
-        print(f"Notepad image saved to {image_path}")
-            
-        # Convert image to base64 for OpenAI API
-        with open(image_path, "rb") as image_file:
-            image_data = image_file.read()
-            base64_image = base64.b64encode(image_data).decode("utf-8")
-            image_url = f"data:image/jpeg;base64,{base64_image}"
-        print(f"Image encoded as base64 for API")
-        
-        # Process the audio to get transcription
-        print("Processing audio transcription...")
-        transcription = read_and_transcribe_audio(client, audio_path)
-        print(f"Transcription completed")
-        
-        # Analyze the image with audio transcription
-        print("Analyzing image with transcription...")
-        feedback = analyze_image(client, transcription, image_url)
-        print(f"Analysis completed")
-        
-        # Generate audio response
-        print("Generating audio response...")
-        audio_output_path = f"temp_response_{uuid.uuid4()}.mp3"
-        generate_answer_audio(client, feedback, audio_output_path)
-        print(f"Audio response generated at {audio_output_path}")
+        # Save uploaded files
+        audio_path, image_path = await save_uploaded_files(audio_file, notepad)
+
+        # Retrieve the concept from the database
+        concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
+        concept_row = concepts.iloc[int(concept_id) - 1]
+        concept_explanation = concept_row.iloc[0]
+        concept_text = concept_row._name[1]
+        print(f"Concept explanation: {concept_explanation}")
+        print(f"Concept text: {concept_text}")
+
+        # Process the follow-up using extracted function
+        feedback, audio_output_path = process_follow_up(client, audio_path, image_path, concept_explanation, concept_text)
         
         # Read the audio file and encode it as base64
         print("Encoding audio file as base64...")
@@ -170,7 +216,6 @@ async def ask_follow_up(
         
     except Exception as e:
         print(f"ERROR in ask_follow_up: {str(e)}")
-        import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
         
