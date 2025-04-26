@@ -222,81 +222,75 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#e6f7ff] flex">
+    <div className="h-screen bg-[#e6f7ff] flex overflow-hidden">
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-8">
         {/* Back Navigation */}
         <button
           onClick={() => setAppState('lectureSelect')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl mb-8"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to lectures
         </button>
 
-        {/* Main Drawing Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Content Area */}
-          <div className="flex-1 flex flex-col max-w-[1200px] mx-auto">
-            {/* Header with Course and Concept */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="text-gray-600 font-handwriting">
-                {selectedLecture?.title || "Machine Learning I"}
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="font-handwriting text-[#4285f4]">
-                  Concept: {selectedConcept?.title || "Linear Classification"}
-                </div>
-                <button className="p-2">
-                  <ArrowLeft className="w-5 h-5 rotate-180" />
-                </button>
+        {/* Header with Course and Concept */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="text-gray-600 font-handwriting">
+            {selectedLecture?.title || "Machine Learning I"}
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-2">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="font-handwriting text-[#4285f4]">
+              Concept: {selectedConcept?.title || "Linear Classification"}
+            </div>
+            <button className="p-2">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content Area with Speech Bubble and Drawing */}
+        <div className="flex gap-8 mt-4 h-[calc(100vh-180px)]">
+          {/* Left Side - Speech Bubble */}
+          <div className="w-[400px] flex-shrink-0">
+            <div className="bg-white p-6 rounded-3xl shadow-lg">
+              <p className="text-2xl font-handwriting text-[#20B2AA]">
+                Granny:
+              </p>
+              <p className="text-xl font-handwriting mt-2">
+                Please explain the concept of linear classification to me
+              </p>
+            </div>
+          </div>
+
+          {/* Right Side - Drawing Area with Grandma */}
+          <div className="flex-1 relative">
+            {/* Grandma Image - Absolute position, adjusted lower */}
+            <div className="absolute top-[20px] left-[calc(20%-180px)] w-[700px] h-[300px] z-10">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/leaningforward_grandma.png"
+                  alt="Grandma leaning forward"
+                  fill
+                  style={{ 
+                    objectFit: 'contain',
+                    objectPosition: 'center bottom'
+                  }}
+                  priority
+                />
               </div>
             </div>
 
-            {/* Main Content Area with Speech Bubble and Drawing */}
-            <div className="flex gap-8 mt-12">
-              {/* Left Side - Speech Bubble */}
-              <div className="w-[400px] flex-shrink-0">
-                <div className="bg-white p-6 rounded-3xl shadow-lg">
-                  <p className="text-2xl font-handwriting text-[#20B2AA]">
-                    Granny:
-                  </p>
-                  <p className="text-xl font-handwriting mt-2">
-                    Please explain the concept of linear classification to me
-                  </p>
-                </div>
-              </div>
-
-              {/* Right Side - Drawing Area with Grandma */}
-              <div className="flex-1 relative">
-                {/* Grandma Image - Above the canvas */}
-                <div className="w-[600px] h-[200px] mx-auto mb-2">
-                  <div className="relative w-full h-full">
-                    <Image
-                      src="/leaningforward_grandma.png"
-                      alt="Grandma leaning forward"
-                      fill
-                      style={{ 
-                        objectFit: 'contain',
-                        objectPosition: 'center bottom'
-                      }}
-                      priority
-                    />
-                  </div>
-                </div>
-
-                {/* Drawing Canvas and Controls */}
-                <div className="w-[800px] mx-auto">
-                  <DrawingCanvas 
-                    isEnabled={true}
-                    onStart={() => {}}
-                    onCancel={() => setSelectedConcept(null)}
-                  />
-                </div>
-              </div>
+            {/* Drawing Canvas and Controls - Adjusted margin-top lower */}
+            <div className="w-[800px] mx-auto mt-[300px]">
+              <DrawingCanvas 
+                isEnabled={true}
+                onStart={() => {}}
+                onCancel={() => setSelectedConcept(null)}
+              />
             </div>
           </div>
         </div>
@@ -321,7 +315,7 @@ export default function Home() {
       <div
         ref={conceptsPanelRef}
         className={cn(
-          "fixed right-0 top-0 h-full w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-10",
+          "fixed right-0 top-0 h-screen w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-10",
           isConceptsPanelOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { Pen, Eraser, Trash2 } from 'lucide-react';
 
 interface DrawingCanvasProps {
   isEnabled: boolean;
@@ -121,9 +122,9 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel }: DrawingCanvasPro
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       {/* Canvas first */}
-      <div className="bg-[#333333] rounded-3xl shadow-lg overflow-hidden">
+      <div className="bg-[#333333] rounded-t-3xl shadow-lg overflow-hidden">
         <canvas
           ref={canvasRef}
           className="w-full h-[400px] cursor-crosshair"
@@ -134,40 +135,41 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel }: DrawingCanvasPro
         />
       </div>
 
-      {/* Controls below */}
-      <div className="flex gap-2 justify-center">
-        <button
-          onClick={toggleEraser}
-          className={`px-6 py-2 rounded-lg font-handwriting text-lg transition-colors ${
-            !isErasing 
-              ? 'bg-[#4285f4] text-white hover:bg-[#3367d6]' 
-              : 'bg-gray-100 hover:bg-gray-200'
-          }`}
-        >
-          Pen
-        </button>
-        <button
-          onClick={toggleEraser}
-          className={`px-6 py-2 rounded-lg font-handwriting text-lg transition-colors ${
-            isErasing 
-              ? 'bg-[#4285f4] text-white hover:bg-[#3367d6]' 
-              : 'bg-gray-100 hover:bg-gray-200'
-          }`}
-        >
-          Eraser
-        </button>
-        <button
-          onClick={clearCanvas}
-          className="px-6 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-handwriting text-lg transition-colors"
-        >
-          Clear
-        </button>
-        <button
-          onClick={onCancel}
-          className="px-6 py-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-handwriting text-lg transition-colors"
-        >
-          Cancel
-        </button>
+      {/* Controls below in a gray bar */}
+      <div className="bg-gray-200 p-3 rounded-b-3xl shadow-lg">
+        <div className="flex gap-3 justify-center items-center">
+          <button
+            onClick={toggleEraser}
+            title="Pen"
+            className={`p-3 rounded-lg transition-colors ${
+              !isErasing 
+                ? 'bg-[#4285f4] text-white hover:bg-[#3367d6]' 
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            <Pen className="w-5 h-5" />
+          </button>
+          
+          <button
+            onClick={toggleEraser}
+            title="Eraser"
+            className={`p-3 rounded-lg transition-colors ${
+              isErasing 
+                ? 'bg-[#4285f4] text-white hover:bg-[#3367d6]' 
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            <Eraser className="w-5 h-5" />
+          </button>
+          
+          <button
+            onClick={clearCanvas}
+            title="Clear"
+            className="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
