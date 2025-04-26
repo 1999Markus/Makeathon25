@@ -3,18 +3,17 @@ export async function uploadPDF(file: File): Promise<{ message: string }> {
     formData.append('pdf', file);
   
     // Konsole-Log zum Debugging
-    console.log('Datei zum Upload vorbereitet:', file.name, file.size, 'bytes');
-  
-    // Mock-Implementierung für Entwicklungszwecke
-    // TODO: Ersetzen Sie dies durch einen tatsächlichen API-Aufruf
+    console.log('Prepared file for upload:', file.name, file.size, 'bytes');
+
+    // TODO: Replace with actual API call
     return new Promise((resolve) => {
-      // Simuliere einen Server-Delay
+      // Simulate server delay
       setTimeout(() => {
-        console.log('PDF hochgeladen (Simulation):', file.name);
+        console.log('PDF uploaded (Simulation):', file.name);
         resolve({
-          message: `${file.name} wurde erfolgreich verarbeitet (Simulation)`
+          message: `${file.name} was successfully processed (Simulation)`
         });
-      }, 1500);
+      }, 3333);
     });
   
     // Reale Implementierung (auskommentiert)

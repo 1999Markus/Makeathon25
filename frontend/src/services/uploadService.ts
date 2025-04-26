@@ -7,12 +7,10 @@ export const uploadAndPlayAudio = async ({
     imageFile: File,
     conceptText: string
 }) => {
-    // Create FormData with exact parameter names matching the backend
     const formData = new FormData();
     formData.append('concept_id', conceptText);
     formData.append('audio_file', audioFile);
     formData.append('notepad_image', imageFile);
-    
 
     try {
         const response = await fetch('http://localhost:8000/api/ask-follow-up', {
@@ -26,25 +24,37 @@ export const uploadAndPlayAudio = async ({
             throw new Error(`Failed to upload: ${response.status} ${errorText}`);
         }
 
-        const blob = await response.blob();
-        const audioUrl = URL.createObjectURL(blob);
+        const { feedback, audio_data } = await response.json();
+
+        console.log('Feedback:', feedback);
+
+        const audioBlob = base64ToBlob(audio_data, 'audio/wav');
+        const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
 
-        // Clean up the object URL after the audio finishes playing
-        audio.addEventListener('ended', () => {
-            URL.revokeObjectURL(audioUrl);
-            console.log('Audio playback finished, URL revoked');
-        });
-
-        // Optional: also revoke if there's an error playing
-        audio.addEventListener('error', () => {
-            URL.revokeObjectURL(audioUrl);
-            console.error('Error playing audio, URL revoked');
-        });
-
         audio.play();
-        console.log('Audio is playing!');
+
+        return feedback; // Optionally return feedback text if you want to display it elsewhere
+
     } catch (error) {
         console.error('Error uploading or playing audio:', error);
     }
 };
+
+// Utility: Convert base64 string to Blob
+function base64ToBlob(base64: string, mimeType: string) {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: mimeType });
+}
