@@ -12,9 +12,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "AI Hackathon API is running!"}
+
 
 @app.post("/api/predict")
 async def predict(data: dict):
