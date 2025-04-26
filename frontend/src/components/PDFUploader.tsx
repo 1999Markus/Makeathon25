@@ -34,6 +34,7 @@ export function PDFUploader({ onUploadSuccess, onUploadError }: PDFUploaderProps
     }
 
     setIsUploading(true);
+
     const uploadToastId = toast.loading('Uploading PDF... 📄');
     try {
       const result = await uploadPDF(pdfFiles[0]);
@@ -49,6 +50,9 @@ export function PDFUploader({ onUploadSuccess, onUploadError }: PDFUploaderProps
         });
         onUploadError?.(error.message);
       } else {
+        toast.error('Failed to upload PDF. ❌', {
+          id: uploadToastId,
+        });
         onUploadError?.('An unknown error occurred');
       }
     } finally {
