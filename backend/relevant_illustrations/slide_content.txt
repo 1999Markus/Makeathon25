@@ -1,0 +1,298 @@
+=== Slide Content and Illustrations ===
+
+
+=== Slide 4 ===
+Text Content:
+Intelligent Agent: Deﬁnition
+acts upon the environment through actuators.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: Shows the interaction between environment, sensors, actuators, and an intelligent agent.
+Illustration saved at: relevant_illustrations/slide_4_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 5 ===
+Text Content:
+Example: Thermostat
+source: Heimeier
+environ-
+Matthias Althoﬀ
+
+Visual Description:
+Diagram; it illustrates the interaction between an environment, sensors, actuators, and an intelligent agent in a thermostat system.
+Illustration saved at: relevant_illustrations/slide_5_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 6 ===
+Text Content:
+Example: Robotic Lawn Mower
+source: Bosch
+environ-
+(The magnetic sensor is required for the border wire)
+Matthias Althoﬀ
+
+Visual Description:
+Diagram - It represents the interaction between the environment, actuators, sensors, and the intelligent agent in a robotic lawn mower system.
+Illustration saved at: relevant_illustrations/slide_6_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 7 ===
+Text Content:
+Example: Automated Car
+source: Carnegie Mellon University
+environ-
+(thermo camera)
+other traﬃc participants
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: The diagram illustrates the interaction between components of an automated car system, such as the environment, sensors, actuators, and the intelligent agent.
+Illustration saved at: relevant_illustrations/slide_7_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 8 ===
+Text Content:
+Example: Humanoid
+source: Kawada Industries
+environ-
+Matthias Althoﬀ
+
+Visual Description:
+Diagram; it shows the interaction between environment, sensors, actuators, and an intelligent agent, illustrating their relationships and roles.
+Illustration saved at: relevant_illustrations/slide_8_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 9 ===
+Text Content:
+Diﬀerence to a Control System View
+In control theory, one typically distinguishes between the system one wants
+to control and the environment. In the AI setting, this distinction is often
+not made.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram showing interactions between environment, plant, actuators, sensors, and intelligent agent.
+Illustration saved at: relevant_illustrations/slide_9_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 11 ===
+Text Content:
+Vacuum-Cleaner World
+Percepts: location and contents, e.g., [A, Dirty]
+Actions: Left, Right, Suck, NoOp (No Operation)
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: The diagram illustrates a simplified "Vacuum-Cleaner World" with areas labeled A and B, depicting the environment where a vacuum cleaner operates. It helps visualize the context for the percepts and actions described.
+Illustration saved at: relevant_illustrations/slide_11_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 13 ===
+Text Content:
+[A, Clean]
+[A, Dirty]
+[B, Clean]
+[B, Dirty]
+[A, Clean], [A, Clean]
+[A, Clean], [A, Dirty]
+...
+...
+An agent program realizing this agent function:
+function Reﬂex-Vacuum-Agent ( [location,status]) returns an action
+if status = Dirty then return Suck
+else if location = A then return Right
+else if location = B then return Left
+Matthias Althoﬀ
+
+Visual Description:
+The slide contains a table and a code snippet. The table outlines a tabular agent function showing percept sequences and corresponding actions, which is critical for understanding the decision-making process of the agent. The code snippet describes a reflex-vacuum-agent algorithm, elaborating on how the agent decides its actions based on the environment's state.
+Illustration saved at: relevant_illustrations/slide_13.png
+--------------------------------------------------------------------------------
+
+=== Slide 19 ===
+Text Content:
+Task Environment (I)
+To design a rational agent, we have to specify the task environment. We
+use the PEAS (performance, environment, actuators, sensors) description:
+safety,
+streets/freeways,
+steering,
+video,
+time,
+traﬃc,
+accelerator,
+accelerometers,
+proﬁts,
+pedestrians,
+brake,
+lidar, . . .
+legality,
+weather, . . .
+horn,
+radar,
+comfort,
+. . .
+speaker/display,
+GPS,
+. . .
+. . .
+. . .
+Matthias Althoﬀ
+
+Visual Description:
+A table; its purpose is to outline the PEAS (performance, environment, actuators, sensors) description for designing a rational agent, specifically an automated taxi.
+Illustration saved at: relevant_illustrations/slide_19.png
+--------------------------------------------------------------------------------
+
+=== Slide 20 ===
+Text Content:
+Task Environment (II)
+To design a rational agent, we have to specify the task environment. We
+use the PEAS (performance, environment, actuators, sensors) description:
+price,
+websites,
+display to user,
+quality,
+vendors,
+follow URL,
+appropriateness,
+ﬁll in form
+eﬃciency
+Matthias Althoﬀ
+
+Visual Description:
+The visual content is a table. It purpose is to specify the PEAS (performance, environment, actuators, sensors) framework for an internet shopping agent.
+Illustration saved at: relevant_illustrations/slide_20.png
+--------------------------------------------------------------------------------
+
+=== Slide 23 ===
+Text Content:
+Properties of Task Environments (III)
+Discrete vs. continuous
+The discrete/continuous distinction applies to the state and the time:
+continuous state + continuous time: e.g., robot
+continuous state + discrete time: e.g., weather station
+discrete state + continuous time: e.g., traﬃc light control
+discrete state + discrete time: e.g., chess
+Example for discrete and continuous state:
+continuous: tank
+discrete: warehouse
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: Illustrates examples of discrete and continuous states using a tank and a warehouse.
+Illustration saved at: relevant_illustrations/slide_23.png
+--------------------------------------------------------------------------------
+
+=== Slide 25 ===
+Text Content:
+seq.
+seq.
+seq.
+seq.
+seq.
+dynamic cont.
+seq.
+dynamic cont.
+cont.
+Part-picking robot
+episodic dynamic cont.
+Reﬁnery controller
+seq.
+dynamic cont.
+seq.
+The above categorizations can be debated in some cases. In some cases,
+about the particular application is available.
+Matthias Althoﬀ
+
+Visual Description:
+The visual content is a table. It categorizes various task environments based on criteria such as observability, number of agents, determinism, episodicity, statisity, and discreteness.
+Illustration saved at: relevant_illustrations/slide_25.png
+--------------------------------------------------------------------------------
+
+=== Slide 27 ===
+Text Content:
+Simple Reﬂex Agents
+Condition−action rules
+Agent selects action on the basis of the current percept.
+The vacuum-cleaner program is the one of a simple reﬂex agent.
+required condition-action rules are implemented. Why?
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: It illustrates the structure of a simple reflex agent, showing how sensors receive input from the environment, use condition-action rules to decide actions, and then actuators interact with the environment.
+Illustration saved at: relevant_illustrations/slide_27_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 28 ===
+Text Content:
+Model-Based Reﬂex Agents (I)
+Condition−action rules
+Extension of the simple reﬂex agent.
+the agent cannot perceive.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram: It illustrates the structure of a model-based reflex agent, showing the interaction between the agent's state, sensors, actuators, and the environment.
+Illustration saved at: relevant_illustrations/slide_28_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 29 ===
+Text Content:
+Model-Based Reﬂex Agents (II)
+New components compared to simple reﬂex agents:
+Internal state: The agent keeps an internal state of the previous situation
+that depends on the percept history and thereby reﬂects unobservable
+aspects. It is an art to come up with “good” internal states (see later in the
+course).
+How the world evolves: Example of a pedestrian becoming unobservable:
+source: Daimler
+pedestrian stepped behind a vehicle, it would
+recognize it too late when reappearing.
+What my actions do: Continuing the pedestrian example: Braking and
+accelerating will change the relative positions in the “new world”.
+Matthias Althoﬀ
+
+Visual Description:
+The slide contains an image illustrating a pedestrian stepping behind a vehicle. Its purpose is to demonstrate the concept of how an agent's internal state and perception must evolve to manage unobservable situations.
+Illustration saved at: relevant_illustrations/slide_29.png
+--------------------------------------------------------------------------------
+
+=== Slide 30 ===
+Text Content:
+Goal-Based Agents (I)
+Extension of the model-based reﬂex agents.
+In addition to knowing the current state of the environment, the goal
+of the agent is explicitly considered.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram - It illustrates the components and flow of information for goal-based agents, showing the interaction between the agent's current state, goals, environmental sensors, actions, and how the world evolves.
+Illustration saved at: relevant_illustrations/slide_30_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 32 ===
+Text Content:
+Utility-Based Agents (I)
+Extension of the goal-based reﬂex agents.
+In addition to achieving the goal state, it should be reached with
+maximum utility, i.e., maximizing the “happiness” of the agent.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram; it illustrates how a utility-based agent functions, showing the interactions between state, utility, actions, sensors, and the environment.
+Illustration saved at: relevant_illustrations/slide_32_illustration.png
+--------------------------------------------------------------------------------
+
+=== Slide 34 ===
+Text Content:
+Learning Agents (I)
+Any previous agent can be extended to a learning agent.
+any of the previous agents.
+Matthias Althoﬀ
+
+Visual Description:
+Diagram showing the structure of a learning agent, including components like Critic, Learning element, Performance element, and Problem generator. It illustrates the flow of information and interactions between these components and the Environment.
+Illustration saved at: relevant_illustrations/slide_34_illustration.png
+--------------------------------------------------------------------------------
