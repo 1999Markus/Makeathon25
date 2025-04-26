@@ -86,10 +86,24 @@ export default function Home() {
   const [isConceptsPanelOpen, setIsConceptsPanelOpen] = useState(false);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [taskProgress, setTaskProgress] = useState<number>(0);
+  const [opaImage, setOpaImage] = useState<string>('a_opa_mediumhappy.png');
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Opa image options
+  const opaImages = [
+    { src: 'a_opa_mediumhappy.png', label: 'Happy' },
+    { src: 'a_opa_mediumsad.png', label: 'Medium Sad' },
+    { src: 'a_opa_sad.png', label: 'Sad' },
+    { src: 'a_opa_veryhappy_.png', label: 'Very Happy' }
+  ];
+
+  // Function to handle switching opa image
+  const handleOpaImageChange = (imageSrc: string) => {
+    setOpaImage(imageSrc);
+  };
 
   // Handle click outside
   useEffect(() => {
@@ -156,13 +170,50 @@ export default function Home() {
         <div className="max-w-6xl w-full flex items-center gap-8">
           {/* Left side with Grandpa */}
           <div className="w-[400px] h-[400px] relative flex-shrink-0">
-            <Image
-              src="/a_opa_veryhappy_.png"
-              alt="Very Happy Grandpa"
-              fill
-              style={{ objectFit: 'contain' }}
-              priority
-            />
+            <style jsx>{`
+              @keyframes breathing {
+                0% { transform: scale(1.000); }
+                40% { transform: scale(1.015); }
+                60% { transform: scale(1.015); }
+                100% { transform: scale(1.000); }
+              }
+              
+              @keyframes eyeMovement {
+                0% { transform: translate(0px, 0px); }
+                20% { transform: translate(2px, -2px); }
+                40% { transform: translate(3px, 0px); }
+                60% { transform: translate(2px, 2px); }
+                80% { transform: translate(-2px, 1px); }
+                100% { transform: translate(0px, 0px); }
+              }
+              
+              .animated-grandpa {
+                animation: breathing 3.5s ease-in-out infinite;
+                transform-origin: center bottom;
+              }
+              
+              .animated-eyes {
+                position: absolute;
+                width: 100px;
+                height: 30px;
+                left: calc(50% - 5px);
+                top: 145px;
+                animation: eyeMovement 5s ease-in-out infinite;
+              }
+            `}</style>
+            
+            <div className="relative w-full h-full animated-grandpa">
+              <Image
+                src="/a_opa_veryhappy_.png"
+                alt="Very Happy Grandpa"
+                fill
+                style={{ objectFit: 'contain' }}
+                priority
+              />
+              
+              {/* Invisible element for eye animation */}
+              <div className="animated-eyes" />
+            </div>
           </div>
           
           {/* Right side with speech bubble and lecture list */}
@@ -170,14 +221,24 @@ export default function Home() {
             {/* Speech Bubble */}
             <div className="relative bg-white p-6 rounded-3xl shadow-lg">
               <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
-              <p className="text-3xl font-handwriting relative z-10">
-                Welcome back, my dear! Choose a lecture you want to explain to me.
+              <p className="text-2xl font-handwriting relative z-10">
+                Welcome back! Please choose a lecture you want to explain to me today.
               </p>
             </div>
 
             {/* Lecture List */}
             <div className="bg-white rounded-3xl shadow-lg p-6">
-              <LectureList onLectureSelect={handleLectureSelect} lectures={LECTURES} />
+              <div className="grid grid-cols-2 gap-4">
+                {LECTURES.map((lecture) => (
+                  <button
+                    key={lecture.id}
+                    onClick={() => handleLectureSelect(lecture)}
+                    className="w-full bg-[#4285f4] hover:bg-[#3b78e7] text-white text-xl font-handwriting py-4 px-4 rounded-2xl shadow-lg transform transition-transform hover:scale-105 text-center"
+                  >
+                    {lecture.title}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -189,7 +250,7 @@ export default function Home() {
     return (
       <div className="h-screen bg-[#e6f7ff] flex overflow-hidden relative">
         {/* Logo */}
-        <div className="absolute top-8 right-8 w-36 h-36 z-50">
+        <div className="absolute top-8 right-8 w-36 h-36 z-10">
           <Image
             src="/opa_ai_logo.png"
             alt="OPA AI Logo"
@@ -223,7 +284,7 @@ export default function Home() {
             </div>
 
             {/* Concept Overview Box (Top Middle) - With Navigation */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] bg-white p-6 rounded-2xl shadow-lg flex items-center gap-4 z-20">
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[300px] bg-white py-3 px-6 rounded-2xl shadow-lg flex items-center gap-4 z-20">
               <button 
                 onClick={handlePreviousConcept} 
                 disabled={!canNavigateConcepts} 
@@ -232,8 +293,8 @@ export default function Home() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="text-center flex-1">
-                <div className="text-xs text-gray-500 font-sans mb-1">{selectedLecture?.title || "Lecture"}</div>
-                <div className="font-handwriting text-lg text-[#4285f4]">
+                <div className="text-xs text-gray-500 font-sans">{selectedLecture?.title || "Lecture"}</div>
+                <div className="font-handwriting text-lg text-[#4285f4] leading-tight">
                   {selectedConcept?.title || "Concept"}
                 </div>
               </div>
@@ -264,12 +325,44 @@ export default function Home() {
 
             {/* Drawing Area Container */}
             <div className="relative flex flex-col items-center">
-              {/* Grandpa Image */}
-              <div className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-10">
-                <div className="relative w-full h-full">
+              {/* Grandpa Image with Animation */}
+              <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-10`}>
+                <style jsx>{`
+                  @keyframes breathing {
+                    0% { transform: scale(1.000); }
+                    40% { transform: scale(1.015); }
+                    60% { transform: scale(1.015); }
+                    100% { transform: scale(1.000); }
+                  }
+                  
+                  @keyframes eyeMovement {
+                    0% { transform: translate(0px, 0px); }
+                    20% { transform: translate(2px, -2px); }
+                    40% { transform: translate(3px, 0px); }
+                    60% { transform: translate(2px, 2px); }
+                    80% { transform: translate(-2px, 1px); }
+                    100% { transform: translate(0px, 0px); }
+                  }
+                  
+                  .animated-grandpa {
+                    animation: breathing 3.5s ease-in-out infinite;
+                    transform-origin: center bottom;
+                  }
+                  
+                  .animated-eyes {
+                    position: absolute;
+                    width: 100px;
+                    height: 30px;
+                    left: calc(50% - 5px);
+                    top: 145px;
+                    animation: eyeMovement 5s ease-in-out infinite;
+                  }
+                `}</style>
+                
+                <div className="relative w-full h-full animated-grandpa">
                   <Image
-                    src="/a_opa_mediumhappy.png"
-                    alt="Grandpa leaning forward"
+                    src={`/${opaImage}`}
+                    alt="Grandpa"
                     fill
                     style={{ 
                       objectFit: 'contain',
@@ -277,7 +370,27 @@ export default function Home() {
                     }}
                     priority
                   />
+                  
+                  {/* Invisible element for eye animation */}
+                  <div className="animated-eyes" />
                 </div>
+              </div>
+              
+              {/* Opa Image Selector Buttons */}
+              <div className="absolute top-[80px] right-[20px] flex flex-col gap-2 z-20">
+                {opaImages.map((image) => (
+                  <button
+                    key={image.src}
+                    onClick={() => handleOpaImageChange(image.src)}
+                    className={`p-2 rounded-full ${opaImage === image.src ? 'bg-[#4285f4] text-white' : 'bg-white text-gray-600'} shadow-md hover:scale-105 transition-all`}
+                    title={`Switch to ${image.label} Grandpa`}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-full bg-cover bg-center" 
+                      style={{ backgroundImage: `url('/${image.src}')` }}
+                    />
+                  </button>
+                ))}
               </div>
 
               {/* Drawing Canvas and Controls */}
@@ -287,7 +400,7 @@ export default function Home() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
                       <button
                         onClick={() => setIsDrawingEnabled(true)}
-                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
+                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105 text-center"
                       >
                         Start explaining to grandpa
                       </button>
