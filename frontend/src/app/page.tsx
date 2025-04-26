@@ -29,12 +29,17 @@ export default function Home() {
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [taskProgress, setTaskProgress] = useState<number>(0);
   const [opaImage, setOpaImage] = useState<string>('a_opa_mediumhappy.png');
+  const [isDraggingProgress, setIsDraggingProgress] = useState(false);
+  const [hasStartedExplaining, setHasStartedExplaining] = useState(false);
+  const [opaQuestion, setOpaQuestion] = useState<string | null>(null);
+  const [canvasKey, setCanvasKey] = useState<number>(0);
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   // Opa image options
   const opaImages = [
@@ -48,6 +53,49 @@ export default function Home() {
   const handleOpaImageChange = (imageSrc: string) => {
     setOpaImage(imageSrc);
   };
+
+  // Handle progress bar drag
+  const handleProgressMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingProgress(true);
+    updateProgressFromMouse(e);
+  };
+
+  const handleProgressMouseMove = (e: React.MouseEvent) => {
+    if (isDraggingProgress) {
+      updateProgressFromMouse(e);
+    }
+  };
+
+  const handleProgressMouseUp = () => {
+    setIsDraggingProgress(false);
+  };
+
+  const updateProgressFromMouse = (e: React.MouseEvent) => {
+    if (!progressBarRef.current) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const height = rect.height;
+    const offsetY = e.clientY - rect.top;
+    
+    // Calculate percentage (inverted because 100% is at the top)
+    let percentage = 100 - (offsetY / height * 100);
+    
+    // Clamp between 0 and 100
+    percentage = Math.max(0, Math.min(100, percentage));
+    
+    setTaskProgress(Math.round(percentage));
+  };
+
+  // Add global mouse up handler
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsDraggingProgress(false);
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
 
   // Handle click outside
   useEffect(() => {
@@ -66,6 +114,19 @@ export default function Home() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isConceptsPanelOpen]);
+
+  // Automatically change Opa image based on progress percentage
+  useEffect(() => {
+    if (taskProgress <= 25) {
+      setOpaImage('a_opa_sad.png');
+    } else if (taskProgress <= 50) {
+      setOpaImage('a_opa_mediumsad.png');
+    } else if (taskProgress <= 90) {
+      setOpaImage('a_opa_mediumhappy.png');
+    } else {
+      setOpaImage('a_opa_veryhappy_.png');
+    }
+  }, [taskProgress]);
 
   useEffect(() => {
     async function fetchConcepts() {
@@ -112,11 +173,15 @@ export default function Home() {
     setSelectedConcept(lecture.concepts?.[0] || null);
 
     setAppState('drawing');
+    setOpaQuestion(null);
+    setHasStartedExplaining(false);
   };
 
   const handleConceptSelect = (concept: Concept) => {
     setSelectedConcept(concept);
     setIsConceptsPanelOpen(false);
+    setOpaQuestion(null);
+    setHasStartedExplaining(false);
   };
 
   // --- Concept Navigation Logic ---
@@ -138,11 +203,25 @@ export default function Home() {
   const canNavigateConcepts = totalConcepts > 1;
   // --- End Concept Navigation Logic ---
 
+  // Array von möglichen Fragen, die Opa stellen kann
+  const followUpQuestions = [
+    "Could you explain that part again?",
+    "I'm not sure I understand. Can you clarify?",
+    "That's interesting! Can you give me more details?",
+    "How does this relate to real-world applications?",
+    "Can you explain it in a different way?",
+    "What happens if we change one of the parameters?",
+    "Is there an example that would make this clearer?",
+    "Why is this concept important?",
+    "How does this connect to what we discussed earlier?",
+    "Could you draw a specific example of this?"
+  ];
+
   if (appState === 'welcome') {
     return (
       <div className="min-h-screen bg-[#e6f7ff] p-8 relative">
         {/* Logo */}
-        <div className="absolute top-8 right-8 w-36 h-36">
+        <div className="absolute top-0 right-8 w-36 h-36">
           <Image
             src="/opa_ai_logo.png"
             alt="OPA AI Logo"
@@ -248,10 +327,10 @@ export default function Home() {
   }
 
   if (appState === 'drawing') {
-    return (
+  return (
       <div className="h-screen bg-[#e6f7ff] flex overflow-hidden relative">
         {/* Logo */}
-        <div className="absolute top-8 right-8 w-36 h-36 z-10">
+        <div className="absolute top-0 right-8 w-36 h-36 z-10">
           <Image
             src="/opa_ai_logo.png"
             alt="OPA AI Logo"
@@ -318,7 +397,9 @@ export default function Home() {
                 <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-6 bg-white transform -translate-x-3 rotate-45" />
                 <div className="relative z-10">
                   <p className="text-lg mt-2">
-                    Please explain the concept of {selectedConcept?.title.toLowerCase() || 'this concept'} to me
+                    {opaQuestion ? opaQuestion : 
+                      `Please explain the concept of ${selectedConcept?.title.toLowerCase() || 'this concept'} to me`
+                    }
                   </p>
                 </div>
               </div>
@@ -400,48 +481,100 @@ export default function Home() {
                   {!isDrawingEnabled && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
                       <button
-                        onClick={() => setIsDrawingEnabled(true)}
+                        onClick={() => {
+                          setIsDrawingEnabled(true);
+                          // Only reset the question when starting to explain a new concept, not when continuing
+                          if (!hasStartedExplaining && !opaQuestion) {
+                            setOpaQuestion(null);
+                          }
+                        }}
                         className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105"
                       >
-                        Start explaining to grandpa
+                        {hasStartedExplaining || opaQuestion ? 'Continue explaining to grandpa' : 'Start explaining to grandpa'}
                       </button>
                     </div>
                   )}
                   <DrawingCanvas 
+                    key={`drawing-${selectedConcept?.id}-${canvasKey}`}
                     isEnabled={isDrawingEnabled}
-                    onStart={() => {}}
+                    onStart={() => {
+                      setHasStartedExplaining(true);
+                    }}
                     onCancel={() => {
                       setIsDrawingEnabled(false);
                     }}
                     onDone={() => {
                       setIsDrawingEnabled(false);
-                      setAppState('welcome');
+                      // Zufällige Rückfrage vom Opa auswählen
+                      const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
+                      setOpaQuestion(followUpQuestions[randomQuestionIndex]);
                     }}
                     concept={selectedConcept?.id || '1'}
                   />
                 </div>
 
                 {/* Progress Bar - Positioned between canvas and right edge */}
-                <div className="absolute right-[-100px] top-0 h-full w-20 bg-white/80 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center p-4 rounded-2xl">
-                  <div className="flex-1 w-3 bg-gray-100 rounded-full relative overflow-hidden">
+                <div 
+                  className="absolute right-[-100px] top-0 h-full w-20 bg-white/80 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center p-4 rounded-2xl"
+                  onMouseMove={handleProgressMouseMove}
+                  onMouseUp={handleProgressMouseUp}
+                >
+                  <div 
+                    className="flex-1 w-3 bg-gray-100 rounded-full relative overflow-hidden cursor-pointer"
+                    ref={progressBarRef}
+                    onMouseDown={handleProgressMouseDown}
+                  >
                     {/* Glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#4285f4]/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#ff4d4d]/20 to-transparent" />
                     {/* Progress bar */}
                     <div 
-                      className="absolute bottom-0 w-3 bg-gradient-to-t from-[#4285f4] to-[#34a853] rounded-full transition-all duration-500"
-                      style={{ height: `${taskProgress}%` }}
+                      className="absolute bottom-0 w-3 rounded-full transition-all duration-300"
+                      style={{ 
+                        height: `${taskProgress}%`,
+                        background: `linear-gradient(to top, rgb(255, 0, 0), rgb(${255 - (taskProgress * 2.55)}, ${taskProgress * 2.55}, 0))`
+                      }}
                     />
-                    {/* Energy pulse effect */}
+                    {/* Progress indicator */}
                     <div 
-                      className="absolute bottom-0 w-3 h-1 bg-[#34a853] animate-pulse"
-                      style={{ bottom: `${taskProgress}%` }}
+                      className={`absolute w-5 h-5 -left-1 rounded-full shadow-md border-2 border-white transition-all duration-300 ${isDraggingProgress ? 'scale-125' : ''}`}
+                      style={{ 
+                        bottom: `calc(${taskProgress}% - 10px)`,
+                        backgroundColor: `rgb(${255 - (taskProgress * 2.55)}, ${taskProgress * 2.55}, 0)`
+                      }}
                     />
                   </div>
                   <div className="mt-4 text-center">
-                    <span className="text-lg text-[#4285f4]">{taskProgress}%</span>
+                    <span 
+                      className="text-lg font-medium"
+                      style={{ 
+                        color: `rgb(${255 - (taskProgress * 2.55)}, ${taskProgress * 2.55}, 0)`
+                      }}
+                    >{taskProgress}%</span>
                     <p className="text-xs text-gray-500 mt-1 font-sans">complete</p>
                   </div>
                 </div>
+
+                {/* Add the Next Concept button below the drawing canvas */}
+                {(hasStartedExplaining || opaQuestion) && canNavigateConcepts && !isDrawingEnabled && (
+                  <div className="absolute bottom-[8px] left-1/2 transform -translate-x-1/2 z-50">
+                    <button
+                      onClick={() => {
+                        // Reset drawing state
+                        setIsDrawingEnabled(false);
+                        // Reset all explanations and questions
+                        setHasStartedExplaining(false);
+                        setOpaQuestion(null);
+                        // Force canvas to clear by incrementing the key
+                        setCanvasKey(prev => prev + 1);
+                        // Move to next concept
+                        handleNextConcept();
+                      }}
+                      className="bg-[#4285f4] hover:bg-[#3b78e7] text-white py-3 px-6 rounded-lg shadow-md transform transition-transform hover:scale-105"
+                    >
+                      Next Concept
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -500,8 +633,8 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
-    );
+    </div>
+  );
   }
 
   return null;
