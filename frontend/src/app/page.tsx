@@ -603,20 +603,23 @@ export default function Home() {
                     onCancel={() => {
                       setIsDrawingEnabled(false);
                     }}
-                    onDone={(result) => {
-                      setIsDrawingEnabled(false);
-                      setShowLoadingScreen(true); // Zeige den Ladebildschirm an
+                    onProcessingStart={() => {
+                      setShowLoadingScreen(true);
+                      setIsDrawingEnabled(false); // Disable drawing immediately
+                      console.log("Processing started, showing loading screen.");
+                    }}
+                    onDone={(feedbackText) => { // Expect the feedback string directly
+                      setShowLoadingScreen(false); // Hide loading screen when done
                       setConceptExplanationCount(prev => prev + 1);
-                      console.log("This is the result:", result);
-                      // Access the feedback property from the result object
-                      if (result) {
-                        setOpaQuestion(result); // Set the speech bubble to the feedback text
-                        console.log("Displaying feedback from backend:", result);
+                      
+                      if (feedbackText) {
+                        setOpaQuestion(feedbackText); // Set the speech bubble to the feedback text
+                        console.log("Processing finished. Displaying feedback:", feedbackText);
                       } else {
                         // Fallback if no feedback (e.g., error during upload or empty feedback)
                         const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
                         setOpaQuestion(followUpQuestions[randomQuestionIndex]);
-                        console.log("Displaying random fallback question.");
+                        console.log("Processing finished. Displaying random fallback question.");
                       }
                     }}
                     onAudioStatusChange={(isRecording) => {

@@ -9,12 +9,13 @@ interface DrawingCanvasProps {
   isEnabled: boolean;
   onStart: () => void;
   onCancel: () => void;
-  onDone: (result?: string) => void;
+  onDone: (feedback?: string) => void;
   concept: string;
   onAudioStatusChange?: (isRecording: boolean) => void;
+  onProcessingStart?: () => void;
 }
 
-export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, onAudioStatusChange }: DrawingCanvasProps) {
+export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, onAudioStatusChange, onProcessingStart }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -334,6 +335,11 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, o
   };
 
   const handleDone = async () => {
+    // Signal start of processing *before* async operations
+    if (onProcessingStart) {
+      onProcessingStart();
+    }
+
     try {
       if (!canvasRef.current) {
         console.error("Canvas ref missing");
@@ -342,12 +348,11 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, o
 
       // Stop and save audio recording first
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        // Notify parent component that audio recording has stopped
-        if (onAudioStatusChange) {
-          onAudioStatusChange(false);
-        }
-        
-        mediaRecorderRef.current.stop();
+         // Notify parent component that audio recording has stopped
+         if (onAudioStatusChange) {
+           onAudioStatusChange(false);
+         }
+         mediaRecorderRef.current.stop();
       }
 
       // Wait a short time to ensure data is available
@@ -368,14 +373,15 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, o
       }
       const imageFile = new File([blob], `drawing_${Date.now()}.webp`, { type: blob.type });
 
-      // Upload using your service and capture the result
-      const result = await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
+      // Upload using your service and capture the feedback string
+      const feedbackText = await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
 
-      // Continue with original done action, passing the feedback text
-      onDone(result); 
+      // Call onDone with the feedback string *after* processing finishes
+      onDone(feedbackText);
     } catch (error) {
       console.error("Error handling done:", error);
-      onDone(); // Call onDone without feedback on error
+      // Call onDone without feedback on error to signal completion
+      onDone();
     }
   };
 
