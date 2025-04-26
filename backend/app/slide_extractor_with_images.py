@@ -121,7 +121,6 @@ Only return the CSV-formatted output, ensuring ALL information is included and A
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.3,
         max_tokens=4000  # Increased token limit for more comprehensive output
     )
 
