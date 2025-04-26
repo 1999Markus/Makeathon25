@@ -172,14 +172,24 @@ export default function Home() {
             {/* Speech Bubble */}
             <div className="relative bg-white p-6 rounded-3xl shadow-lg">
               <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
-              <p className="text-3xl font-handwriting relative z-10">
-                Welcome back, my dear! Choose a lecture you want to explain to me.
+              <p className="text-2xl font-handwriting relative z-10">
+                Welcome back! Please choose a lecture you want to explain to me today.
               </p>
             </div>
 
             {/* Lecture List */}
             <div className="bg-white rounded-3xl shadow-lg p-6">
-              <LectureList onLectureSelect={handleLectureSelect} lectures={LECTURES} />
+              <div className="grid grid-cols-2 gap-4">
+                {LECTURES.map((lecture) => (
+                  <button
+                    key={lecture.id}
+                    onClick={() => handleLectureSelect(lecture)}
+                    className="w-full bg-[#4285f4] hover:bg-[#3b78e7] text-white text-xl font-handwriting py-4 px-4 rounded-2xl shadow-lg transform transition-transform hover:scale-105 text-center"
+                  >
+                    {lecture.title}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -289,7 +299,7 @@ export default function Home() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
                       <button
                         onClick={() => setIsDrawingEnabled(true)}
-                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
+                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105 text-center"
                       >
                         Start explaining to grandpa
                       </button>

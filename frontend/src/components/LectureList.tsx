@@ -71,19 +71,7 @@ export function LectureList({ lectures, onLectureSelect }: LectureListProps) {
   );
 }
 
-// Function to generate consistent blue shades based on lecture ID
+// Function to return a consistent middle blue shade
 function getRandomColor(id: string): string {
-  const blueShades = [
-    '#bbdefb', // Light Blue 100
-    '#90caf9', // Light Blue 300
-    '#64b5f6', // Light Blue 400
-    '#42a5f5', // Blue 500
-    '#2196f3', // Blue 600
-    '#1e88e5', // Blue 700
-    '#1976d2', // Blue 800
-    '#1565c0', // Blue 900
-  ];
-  
-  const index = parseInt(id) % blueShades.length;
-  return blueShades[index];
+  return '#42a5f5'; // Blue 500 (nice middle blue)
 }
