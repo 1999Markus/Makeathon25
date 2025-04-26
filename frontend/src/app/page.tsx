@@ -46,19 +46,6 @@ export default function Home() {
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Opa image options
-  const opaImages = [
-    { src: 'a_opa_mediumhappy.png', label: 'Happy' },
-    { src: 'a_opa_mediumsad.png', label: 'Medium Sad' },
-    { src: 'a_opa_sad.png', label: 'Sad' },
-    { src: 'a_opa_veryhappy_.png', label: 'Very Happy' }
-  ];
-
-  // Function to handle switching opa image
-  const handleOpaImageChange = (imageSrc: string) => {
-    setOpaImage(imageSrc);
-  };
-
   // Handle progress bar drag
   const handleProgressMouseDown = (e: React.MouseEvent) => {
     setIsDraggingProgress(true);
@@ -122,7 +109,10 @@ export default function Home() {
 
   // Aktualisiere die Opa-Bild-Anzeige basierend auf taskProgress
   useEffect(() => {
-    if (isRecordingAudio) {
+    if (showLoadingScreen) {
+      // Während des Loading-Screens immer das "thinking" Bild anzeigen
+      setOpaImage('a_opa_thinking.png');
+    } else if (isRecordingAudio) {
       // Während der Audioaufnahme immer opa_listening anzeigen
       setOpaImage('a_opa_listening.png');
     } else if (taskProgress <= 25) {
@@ -134,7 +124,7 @@ export default function Home() {
     } else {
       setOpaImage('a_opa_veryhappy_.png');
     }
-  }, [taskProgress, isRecordingAudio]);
+  }, [taskProgress, isRecordingAudio, showLoadingScreen]);
 
   useEffect(() => {
     async function fetchConcepts() {
@@ -489,23 +479,6 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Opa Image Selector Buttons */}
-              <div className="absolute top-[80px] right-[20px] flex flex-col gap-2 z-20">
-                {opaImages.map((image) => (
-                  <button
-                    key={image.src}
-                    onClick={() => handleOpaImageChange(image.src)}
-                    className={`p-2 rounded-full ${opaImage === image.src ? 'bg-[#4285f4] text-white' : 'bg-white text-gray-600'} shadow-md hover:scale-105 transition-all`}
-                    title={`Switch to ${image.label} Grandpa`}
-                  >
-                    <div 
-                      className="w-8 h-8 rounded-full bg-cover bg-center" 
-                      style={{ backgroundImage: `url('/${image.src}')` }}
-                    />
-                  </button>
-                ))}
-              </div>
-
               {/* Drawing Canvas and Controls */}
               <div className="w-[900px] mx-auto mt-[300px] relative flex items-center">
                 <div className="flex-1">
