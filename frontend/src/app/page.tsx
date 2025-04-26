@@ -6,6 +6,7 @@ import { LectureList } from "@/components/LectureList";
 import Image from "next/image";
 import { ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { PDFUploader } from "@/components/PDFUploader";
 
 type AppState = 'welcome' | 'drawing';
 
@@ -235,6 +236,27 @@ export default function Home() {
                 {lecture.title}
               </button>
             ))}
+          </div>
+          
+          {/* PDF Upload-Bereich */}
+          <div className="mt-4 p-2 border-t border-gray-200 pt-3">
+            <h3 className="text-lg mb-2 text-center text-gray-700">Upload New Lecture Slides</h3>
+            <div className="h-16 relative">
+              <PDFUploader 
+                onUploadSuccess={(message) => {
+                  alert(`Upload successful: ${message}`);
+                  // Here you can perform additional actions after successful upload
+                }}
+                onUploadError={(error) => {
+                  alert(`Upload failed: ${error}`);
+                  // Error handling
+                }}
+              />
+              
+              <div className="mt-1 text-center text-xs text-gray-500">
+                Drag and drop your PDF files here to upload
+              </div>
+            </div>
           </div>
         </div>
       </div>
