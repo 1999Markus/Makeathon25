@@ -11,7 +11,7 @@ distro==1.9.0
 dnspython==2.7.0
 email_validator==2.2.0
 exceptiongroup==1.2.2
-fastapi==0.115.7
+fastapi==0.109.2
 fastapi-cli==0.0.7
 frozenlist==1.6.0
 h11==0.14.0
@@ -38,7 +38,7 @@ PyMuPDF==1.25.5
 PyPDF2==3.0.1
 pytest==8.3.5
 python-dotenv==1.0.0
-python-multipart==0.0.20
+python-multipart==0.0.9
 PyYAML==6.0.2
 requests==2.32.3
 rich==14.0.0
@@ -51,7 +51,7 @@ typer==0.15.2
 typing-inspection==0.4.0
 typing_extensions==4.13.2
 urllib3==2.4.0
-uvicorn==0.34.0
+uvicorn==0.27.1
 uvloop==0.21.0
 watchfiles==1.0.5
 websockets==15.0.1

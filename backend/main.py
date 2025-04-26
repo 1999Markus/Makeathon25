@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from pydantic import BaseModel
@@ -33,6 +33,37 @@ app.include_router(router, prefix="/api")
 
 @app.get("/")
 async def root():
+    return {"message": "AI Hackathon API is running!"}
+
+
+@app.post("/upload-pdf/")
+async def upload_pdf(file: UploadFile = File(...)):
+    """Endpoint to handle PDF uploads from frontend."""
+    try:
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path(__file__).resolve().parent / "uploads"
+        upload_dir.mkdir(exist_ok=True)
+        
+        # Save the uploaded file
+        file_path = upload_dir / file.filename
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Process the PDF
+        qa_pairs = extract_key_concepts_and_generate_qa(str(file_path))
+        
+        return {
+            "message": "PDF processed successfully",
+            "filename": file.filename,
+            "qa_pairs_generated": qa_pairs
+        }
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        file.file.close()
+    
+@app.get("/")
+async def root():
     """Root endpoint that provides API information."""
     return {
         "message": "Learning Companion API",
@@ -43,8 +74,6 @@ async def root():
             "/api/evaluate"
         ]
     }
-
-# If running directly, start the application
+    # If running directly, start the application
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 
