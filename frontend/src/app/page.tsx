@@ -69,6 +69,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchConcepts() {
+      let concepts: Concept[];
       try {
         const response = await fetch('http://localhost:8000/api/get-key-concepts', {
           method: 'GET',
@@ -76,32 +77,31 @@ export default function Home() {
               'Accept': 'application/json',
           },
         });
-        if (!response.ok) {
-          throw new Error('Failed to fetch concepts');
-        }
         const conceptsFromBackend = await response.json();
+        if (response.ok) {
+          concepts = conceptsFromBackend.map((c: any, index: number) => ({
+            id: c.id ?? `concept-${index}`,
+            title: c.concept ?? "Untitled Concept",
+            description: c.answer ?? "No description available",
+          }));
+        } else {
+          concepts = [{id: '1', title: "No Concepts", description: "No text available."}]
+        }
 
-        // Map backend concepts into your Concept type
-        const concepts: Concept[] = conceptsFromBackend.map((c: any, index: number) => ({
-          id: c.id ?? `concept-${index}`,
-          title: c.concept ?? "Untitled Concept",
-          description: c.answer ?? "No description available",
-        }));
-
-        // Create fake lectures using these concepts
-        const lecturesData: Lecture[] = [
-          { id: '1', title: 'Machine Learning', concepts },
-          { id: '3', title: 'Deep Learning', concepts },
-          { id: '4', title: 'Fundamentals of AI', concepts },
-          { id: '6', title: 'Computer Vision', concepts },
-          { id: '7', title: 'Natural Language Processing', concepts },
-          { id: '8', title: 'Reinforcement Learning', concepts },
-        ];
-
-        setLectures(lecturesData);
       } catch (error) {
+        concepts = [{id: '1', title: "No Concepts", description: "No text available."}]
         console.error('Error fetching concepts:', error);
       }
+      const lecturesData: Lecture[] = [
+        { id: '1', title: 'Machine Learning', concepts },
+        { id: '3', title: 'Deep Learning', concepts },
+        { id: '4', title: 'Fundamentals of AI', concepts },
+        { id: '6', title: 'Computer Vision', concepts },
+        { id: '7', title: 'Natural Language Processing', concepts },
+        { id: '8', title: 'Reinforcement Learning', concepts },
+      ];
+
+      setLectures(lecturesData);
     }
 
     fetchConcepts();
@@ -417,7 +417,7 @@ export default function Home() {
                       setIsDrawingEnabled(false);
                       setAppState('welcome');
                     }}
-                    concept={selectedConcept?.title || 'Selected Concept is null'}
+                    concept={selectedConcept?.id || '1'}
                   />
                 </div>
 
