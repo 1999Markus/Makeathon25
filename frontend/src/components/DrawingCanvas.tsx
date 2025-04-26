@@ -11,9 +11,10 @@ interface DrawingCanvasProps {
   onCancel: () => void;
   onDone: () => void;
   concept: string;
+  onAudioStatusChange?: (isRecording: boolean) => void;
 }
 
-export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }: DrawingCanvasProps) {
+export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, onAudioStatusChange }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -96,6 +97,11 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
       recorder.start(1000);
       console.log("Audio recording started");
       
+      // Notify parent component that audio recording has started
+      if (onAudioStatusChange) {
+        onAudioStatusChange(true);
+      }
+      
       // Store references
       audioContextRef.current = audioCtx;
       analyserRef.current = analyser;
@@ -117,6 +123,11 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
   // Clean up audio resources
   const cleanupAudio = () => {
     console.log("Cleaning up audio resources");
+    
+    // Notify parent component that audio recording has stopped
+    if (onAudioStatusChange) {
+      onAudioStatusChange(false);
+    }
     
     // Stop media recorder if running
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -331,6 +342,11 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
 
       // Stop and save audio recording first
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        // Notify parent component that audio recording has stopped
+        if (onAudioStatusChange) {
+          onAudioStatusChange(false);
+        }
+        
         mediaRecorderRef.current.stop();
       }
 

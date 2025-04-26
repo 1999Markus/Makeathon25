@@ -36,6 +36,8 @@ export default function Home() {
   const [conceptExplanationCount, setConceptExplanationCount] = useState<number>(0);
   const [showingFeedback, setShowingFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
 
@@ -118,9 +120,12 @@ export default function Home() {
     };
   }, [isConceptsPanelOpen]);
 
-  // Automatically change Opa image based on progress percentage
+  // Aktualisiere die Opa-Bild-Anzeige basierend auf taskProgress
   useEffect(() => {
-    if (taskProgress <= 25) {
+    if (isRecordingAudio) {
+      // Während der Audioaufnahme immer opa_listening anzeigen
+      setOpaImage('a_opa_listening.png');
+    } else if (taskProgress <= 25) {
       setOpaImage('a_opa_sad.png');
     } else if (taskProgress <= 50) {
       setOpaImage('a_opa_mediumsad.png');
@@ -129,7 +134,7 @@ export default function Home() {
     } else {
       setOpaImage('a_opa_veryhappy_.png');
     }
-  }, [taskProgress]);
+  }, [taskProgress, isRecordingAudio]);
 
   useEffect(() => {
     async function fetchConcepts() {
@@ -178,6 +183,7 @@ export default function Home() {
     setOpaQuestion(null);
     setHasStartedExplaining(false);
     setConceptExplanationCount(0); // Reset concept count for new lecture
+    setShowLoadingScreen(false); // Reset loading screen
   };
 
   const handleConceptSelect = (concept: Concept) => {
@@ -186,6 +192,7 @@ export default function Home() {
     setOpaQuestion(null);
     setHasStartedExplaining(false);
     setConceptExplanationCount(0); // Reset concept count for new concept
+    setShowLoadingScreen(false); // Reset loading screen
   };
 
   // --- Concept Navigation Logic ---
@@ -365,6 +372,7 @@ export default function Home() {
             onClick={() => {
               setAppState('welcome');
               setIsDrawingEnabled(false);
+              setShowLoadingScreen(false); // Reset loading screen when going back to lectures
             }}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-lg"
           >
@@ -431,7 +439,7 @@ export default function Home() {
             {/* Drawing Area Container */}
             <div className="relative flex flex-col items-center">
               {/* Grandpa Image with Animation */}
-              <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-40`}>
+              <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-50`}>
                 <style jsx>{`
                   @keyframes breathing {
                     0% { transform: scale(1.000); }
@@ -501,7 +509,7 @@ export default function Home() {
               {/* Drawing Canvas and Controls */}
               <div className="w-[900px] mx-auto mt-[300px] relative flex items-center">
                 <div className="flex-1">
-                  {!isDrawingEnabled && (
+                  {!isDrawingEnabled && !showLoadingScreen && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
                       {/* Halbdurchsichtiger Overlay für die Zeichenfläche */}
                       <div className="absolute inset-0 bg-black/50 rounded-3xl"></div>
@@ -591,6 +599,28 @@ export default function Home() {
                       )}
                     </div>
                   )}
+
+                  {/* Loading Screen */}
+                  {showLoadingScreen && (
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center z-20 cursor-pointer"
+                      onClick={() => {
+                        setShowLoadingScreen(false);
+                        // Increment the explanation count
+                        setConceptExplanationCount(prev => prev + 1);
+                        // Zufällige Rückfrage vom Opa auswählen
+                        const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
+                        setOpaQuestion(followUpQuestions[randomQuestionIndex]);
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-black/80 rounded-3xl"></div>
+                      <div className="relative z-10 text-white text-center">
+                        <div className="text-xl mb-4">Give me a second to think about it.</div>
+                        <div className="text-sm">Click anywhere to continue</div>
+                      </div>
+                    </div>
+                  )}
+
                   <DrawingCanvas 
                     key={`drawing-${selectedConcept?.id}-${canvasKey}`}
                     isEnabled={isDrawingEnabled}
@@ -602,11 +632,11 @@ export default function Home() {
                     }}
                     onDone={() => {
                       setIsDrawingEnabled(false);
-                      // Increment the explanation count
-                      setConceptExplanationCount(prev => prev + 1);
-                      // Zufällige Rückfrage vom Opa auswählen
-                      const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
-                      setOpaQuestion(followUpQuestions[randomQuestionIndex]);
+                      setShowLoadingScreen(true); // Zeige den Ladebildschirm an
+                    }}
+                    onAudioStatusChange={(isRecording) => {
+                      setIsRecordingAudio(isRecording);
+                      console.log(`Audio recording status: ${isRecording ? 'active' : 'inactive'}`);
                     }}
                     concept={selectedConcept?.id || '1'}
                   />
@@ -662,7 +692,7 @@ export default function Home() {
           ref={toggleButtonRef}
           onClick={() => setIsConceptsPanelOpen(!isConceptsPanelOpen)}
           className={cn(
-            "fixed right-0 top-1/2 -translate-y-1/2 bg-[#4285f4] text-white p-2 rounded-l-xl transition-transform z-20",
+            "fixed right-0 top-1/2 -translate-y-1/2 bg-[#4285f4] text-white p-2 rounded-l-xl transition-transform z-50",
             isConceptsPanelOpen && "translate-x-[300px]"
           )}
         >
@@ -676,7 +706,7 @@ export default function Home() {
         <div
           ref={conceptsPanelRef}
           className={cn(
-            "fixed right-0 top-0 h-screen w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-30",
+            "fixed right-0 top-0 h-screen w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-50",
             isConceptsPanelOpen ? "translate-x-0" : "translate-x-full"
           )}
         >
