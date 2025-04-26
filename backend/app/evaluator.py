@@ -1,9 +1,10 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List, Optional
 import os
 from pathlib import Path
 from .slide_extractor_with_images import extract_key_concepts_and_generate_qa
 import openai
 from dotenv import load_dotenv
+import json
 
 class Evaluator:
     def __init__(self):
@@ -14,78 +15,68 @@ class Evaluator:
             raise ValueError("OPENAI_API_KEY not found in .env file")
         self.client = openai.OpenAI(api_key=api_key)
     
-    def evaluate(self, course_content: Dict, audio_file_path: str) -> Tuple[float, str]:
+    def evaluate(self, 
+                concept: Dict,
+                user_answer: str,
+                chat_history: str) -> Tuple[float, str]:
         """
-        Evaluate a user's voice explanation of course content.
+        Evaluate a user's explanation of a concept.
         
         Args:
-            course_content (Dict): The expected course content to be explained
-            audio_file_path (str): Path to the MP3 file containing user's explanation
+            concept (Dict): The concept being explained with its expected answer
+            user_answer (str): The user's current explanation (text from drawing + audio)
+            chat_history (str): Previous conversation history as a text string
             
         Returns:
-            Tuple[float, str]: A score (0-1) and feedback message
+            Tuple[float, str]: A score (0-100%) and feedback message
         """
-        # Extract content from the PDF
-        pdf_path = course_content.get("pdf_path")
-        if not pdf_path:
-            return 0.0, "No PDF path provided in course content"
-            
         try:
-            # Extract and analyze content from PDF
-            qa_pairs = extract_key_concepts_and_generate_qa(pdf_path)
+            # Prepare the evaluation prompt
+            evaluation_prompt = f"""You are an AI evaluator helping a student explain concepts to their grandpa. 
+            Evaluate how well the following explanation covers the key points of the concept.
             
-            # Transcribe the audio file
-            with open(audio_file_path, "rb") as audio_file:
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file
-                )
+            Concept to explain: {concept['title']}
+            Expected explanation: {concept['description']}
             
-            # Prepare content for evaluation
-            key_concepts = []
-            for qa_pair in qa_pairs.split("\n\n"):
-                if qa_pair.startswith("Q:"):
-                    question = qa_pair.split("Q:")[1].split("A:")[0].strip()
-                    answer = qa_pair.split("A:")[1].strip()
-                    key_concepts.append({
-                        "concept": question,
-                        "explanation": answer
-                    })
+            User's current explanation: {user_answer}
             
-            # Evaluate the explanation
-            evaluation_prompt = f"""Evaluate how well the following explanation covers the key concepts from the lecture slides.
-            
-            Explanation:
-            {transcript.text}
-            
-            Key Concepts:
-            {key_concepts}
+            Previous conversation history:
+            {chat_history}
             
             Please provide:
-            1. A score from 0 to 1 (where 1 is perfect)
+            1. A score from 0 to 100% for this iteration's explanation quality
             2. Detailed feedback on what was covered well and what was missing
             3. Suggestions for improvement
+            4. A follow-up question from grandpa to encourage deeper understanding
             
             Format your response as:
-            SCORE: [number between 0 and 1]
+            SCORE: [number between 0 and 100]
             FEEDBACK: [your feedback]
-            SUGGESTIONS: [your suggestions]"""
+            SUGGESTIONS: [your suggestions]
+            FOLLOW_UP: [grandpa's follow-up question]"""
             
             response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are an expert at evaluating explanations of academic content."},
+                    {"role": "system", "content": "You are an expert at evaluating explanations of academic concepts. Always provide scores between 0 and 100."},
                     {"role": "user", "content": evaluation_prompt}
-                ]
+                ],
+                temperature=0.7
             )
             
             # Parse the response
             result = response.choices[0].message.content
+            
+            # Extract score and feedback
             score = float(result.split("SCORE:")[1].split("\n")[0].strip())
             feedback = result.split("FEEDBACK:")[1].split("SUGGESTIONS:")[0].strip()
-            suggestions = result.split("SUGGESTIONS:")[1].strip()
+            suggestions = result.split("SUGGESTIONS:")[1].split("FOLLOW_UP:")[0].strip()
+            follow_up = result.split("FOLLOW_UP:")[1].strip()
             
-            return score, f"{feedback}\n\nSuggestions for improvement:\n{suggestions}"
+            # Combine feedback into a single message
+            feedback_message = f"{feedback} {suggestions} {follow_up}"
+            
+            return score, feedback_message
             
         except Exception as e:
             return 0.0, f"Error during evaluation: {str(e)}" 
