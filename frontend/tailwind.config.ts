@@ -9,9 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)"],
-        mono: ["var(--font-geist-mono)"],
-        handwriting: ["var(--font-indie-flower)"],
+        sans: ["var(--font-lexend)", "Lexend", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "sans-serif"],
+        mono: ["SFMono-Regular", "Menlo", "Consolas", "monospace"],
+        handwriting: ["var(--font-lexend)", "Lexend", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "sans-serif"],
       },
     },
   },

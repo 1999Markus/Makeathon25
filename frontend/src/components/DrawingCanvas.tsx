@@ -37,7 +37,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
   const setupCanvasContext = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = CANVAS_BACKGROUND_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#000000'; // Default to black pen
+    ctx.strokeStyle = '#ffffff'; // Default to white pen
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = 2;
@@ -311,8 +311,8 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
       ctx.strokeStyle = CANVAS_BACKGROUND_COLOR; 
       ctx.lineWidth = 20;
     } else {
-      // Set pen color back to black
-      ctx.strokeStyle = '#000000';
+      // Set pen color back to white
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
     }
   };
@@ -384,7 +384,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
               {/* Left side with Cancel button */}
               <button
                 onClick={handleCancel}
-                className="bg-red-500 hover:bg-red-600 text-white font-handwriting px-6 py-2 rounded-lg shadow-md transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
               >
                 Cancel
               </button>
@@ -456,7 +456,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept }:
               {/* Right side with Done button */}
               <button
                 onClick={handleDone}
-                className="bg-green-500 hover:bg-green-600 text-white font-handwriting px-6 py-2 rounded-lg shadow-md transition-colors"
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
               >
                 I'm done
               </button>

@@ -59,7 +59,7 @@ export function PDFUploader({ onUploadSuccess, onUploadError }: PDFUploaderProps
           : "bg-white border-2 border-dashed border-gray-300"
       )}
     >
-      <p className="font-handwriting text-gray-500">
+      <p className="text-gray-500">
         {isUploading ? 'Uploading...' : 'Drop PDF here'}
       </p>
     </div>

@@ -39,7 +39,7 @@ export function LectureList({ lectures, onLectureSelect }: LectureListProps) {
             <div key={lecture.id} className="p-1">
               <button
                 onClick={() => onLectureSelect(lecture)}
-                className="w-full text-left p-4 rounded-xl font-handwriting text-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
+                className="w-full text-left p-4 rounded-xl text-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
                 style={{
                   backgroundColor: getRandomColor(lecture.id),
                   color: 'white',
