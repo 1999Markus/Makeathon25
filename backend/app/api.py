@@ -1,7 +1,8 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 import os
 import uuid
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 from .core import analyze_image, generate_answer_audio, transcribe_speech_input
 from openai import OpenAI
 from .evaluator import Evaluator
@@ -18,6 +19,10 @@ evaluator = Evaluator()
 
 class CourseContent(BaseModel):
     pdf_path: str
+
+class FollowUpResponse(BaseModel):
+    feedback: str = Field(..., description="Feedback from the grandfather on the explanation")
+    audio_data: str = Field(..., description="Base64-encoded audio of the feedback")
 
 @router.post("/evaluate")
 async def evaluate_explanation(
@@ -53,35 +58,6 @@ async def evaluate_explanation(
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-"""
-@router.post("/extract-content")
-async def extract_content(pdf_file: UploadFile = File(...)):
-    
-    Extract and analyze content from a PDF slide.
-    
-    Args:
-        pdf_file: The PDF file containing the slide
-        
-    Returns:
-        A dictionary containing the extracted and analyzed content
-    
-    # Save the uploaded file temporarily
-    temp_path = f"temp_{pdf_file.filename}"
-    with open(temp_path, "wb") as buffer:
-        content = await pdf_file.read()
-        buffer.write(content)
-    
-    try:
-        # Extract and analyze content
-        result = pdf_extractor.extract_content(temp_path)
-        return result
-    finally:
-        # Clean up the temporary file
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-             
-"""
-
 def process_follow_up(client, audio_path, image_path, concept_explanation, concept_text):
     """
     Process a follow-up question with audio and image data.
@@ -91,6 +67,7 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         audio_path: Path to the temporary audio file
         image_path: Path to the temporary image file
         concept_explanation: The explanation of the concept
+        concept_text: The text of the concept
     Returns:
         tuple: (feedback, audio_output_path)
     """
@@ -153,17 +130,17 @@ async def save_uploaded_files(audio_file, notepad):
 
     return audio_path, image_path
 
-@router.post("/ask-follow-up")
+@router.post("/ask-follow-up", response_model=FollowUpResponse)
 async def ask_follow_up(
-    concept_id: str = Form(...),
-    audio_file: UploadFile = File(...),
-    notepad: UploadFile = File(...)
+    concept_id: str = Form(..., description="ID of the concept being explained"),
+    audio_file: UploadFile = File(..., description="Audio recording of the explanation"),
+    notepad_image: UploadFile = File(..., description="Image of drawn notes or diagram")
 ):
     """
     Process a follow-up question with audio explanation and notepad drawing.
     
     Args:
-        concept: The concept being explained
+        concept_id: ID of the concept being explained
         audio_file: Audio recording of the user's explanation
         notepad: Image of the user's drawn notes
         
@@ -173,7 +150,7 @@ async def ask_follow_up(
 
     # Log that the function was called
     print(f"ask_follow_up function called with concept: {concept_id}")
-    print(f"Audio file: {audio_file.filename}, Notepad file: {notepad.filename}")
+    print(f"Audio file: {audio_file.filename}, Notepad file: {notepad_image.filename}")
     
     # Create OpenAI client
     print("Creating OpenAI client...")
@@ -187,7 +164,7 @@ async def ask_follow_up(
     
     try:
         # Save uploaded files
-        audio_path, image_path = await save_uploaded_files(audio_file, notepad)
+        audio_path, image_path = await save_uploaded_files(audio_file, notepad_image)
 
         # Retrieve the concept from the database
         concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
@@ -231,4 +208,14 @@ async def ask_follow_up(
                     print(f"Failed to remove temporary file {path}: {str(e)}")
         print("Cleanup completed")
 
-    
+@router.get("/get-key-concepts")
+async def get_key_concepts():
+    """
+    Get the key concepts for the hardcoded course.
+    """
+    concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
+    key_concepts = []
+    for row in concepts.head(10).itertuples():
+        key_concepts.append(row[0])
+
+    return key_concepts
