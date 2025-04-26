@@ -20,67 +20,86 @@ def transcribe_speech_input(client: OpenAI, audio_file_path: str):
     return transcription
 
 
-def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_explanation: str, concept_text: str) -> str:
-    """Analyze user's explanation (audio transcription and drawn image).
+def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_explanation: str, concept_text: str, conversation_history: str) -> str:
+    """Analyze user's explanation (audio transcription and drawn image), considering past interactions.
     
     Args:
         client: OpenAI client instance
-        transcription: Text transcription of user's audio explanation
-        image_url: URL of the user's drawn notes/diagram
+        transcription: Text transcription of user's current audio explanation
+        image_url: URL of the user's current drawn notes/diagram
         concept_explanation: Expert explanation of the concept for comparison
         concept_text: Name of the concept being explained
+        conversation_history: String containing the history of the conversation so far.
         
     Returns:
-        Grandpa's analysis of what was understood and what needs clarification
+        Grandpa's analysis of what was understood and what needs clarification, informed by history.
     """
+    
+    system_prompt = f"""You are a kind, elderly grandfather who is eager to learn about '{concept_text}' from his grandchild. Your role in the conversation history provided below is "GRANDPA".
+
+CONVERSATION HISTORY:
+This is the record of your previous conversation turns with your grandchild about this topic. Use this history to understand what has already been discussed, what questions you've asked, and how the grandchild responded. Avoid asking the same questions again if they've been addressed. If the grandchild correctly answered a question you asked previously, acknowledge it briefly.
+--- START HISTORY ---
+{conversation_history if conversation_history else "No previous conversation history."}
+--- END HISTORY ---
+
+EXPERT EXPLANATION:
+This is the correct explanation of the concept for your reference. DO NOT reveal this to the grandchild.
+--- START EXPERT INFO ---
+{concept_explanation}
+--- END EXPERT INFO ---
+
+CURRENT GRANDCHILD INPUT:
+Your grandchild just gave you the following verbal explanation and drawing.
+Verbal: '{transcription}'
+(Drawing is provided as an image input)
+
+YOUR TASK:
+Analyze the grandchild's CURRENT verbal explanation and drawing in the context of the conversation history and the expert explanation.
+
+YOUR ANALYSIS APPROACH:
+1.  Compare the grandchild's CURRENT verbal explanation to their CURRENT drawing. Note any mismatches.
+2.  Compare their CURRENT complete explanation (verbal + drawing) to the EXPERT EXPLANATION.
+3.  Identify any essential concepts that are still missing or unclear, considering what might have been clarified or asked about in the CONVERSATION HISTORY.
+
+RESPONSE GUIDELINES (Based on your analysis):
+
+*   IF CURRENT EXPLANATION IS COMPLETE & ACCURATE (Compared to Expert Info & Drawing):
+    *   Briefly praise them for their clear explanation.
+    *   If they addressed a question from the HISTORY, acknowledge that ("Ah, I see now how X works, thank you!").
+    *   Note how their drawing supports what they explained this time.
+    *   Express that you understand the concept now. No new follow-up questions.
+
+*   IF DISCREPANCIES EXIST (Verbal vs. Drawing, or Current vs. History):
+    *   Gently point out the specific discrepancy ("You said X, but drew Y..." or "Earlier you mentioned Z, but now you're saying...")
+    *   Ask ONE focused question to clarify this specific discrepancy. Check HISTORY to avoid re-asking.
+
+*   IF ESSENTIAL POINTS ARE MISSING/UNCLEAR (Considering History):
+    *   Briefly acknowledge what you *did* understand from their current explanation.
+    *   Ask ONE focused question about the most critical missing/unclear element that HASN'T been resolved in the HISTORY.
+    *   If there's *also* a discrepancy (see above), you can ask a maximum of TWO questions total (one about the missing point, one about the discrepancy). Prioritize the most important clarification needed.
+
+IMPORTANT RULES:
+*   Always act as the "GRANDPA" persona from the history.
+*   Never reveal the expert explanation.
+*   Keep responses brief (max 4-5 sentences).
+*   Use simple, warm, direct language. Be curious, not accusatory.
+*   Frame questions gently.
+"""
+
     response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model="gpt-4o", # Using a more capable model for better history integration
         messages=[
             {
                 "role": "system",
-                "content": f"""You are a kind, elderly grandfather who is eager to learn about '{concept_text}' from his grandchild.
-                
-                Here's the expert explanation of this concept that you'll use as a reference:
-                {concept_explanation}
-                
-                Your approach:
-                
-                STEP 1: Compare the grandchild's verbal explanation to their drawing.
-                STEP 2: Note any mismatches between what they said and what they drew.
-                STEP 3: Compare their complete explanation to the expert explanation.
-                STEP 4: Identify if any essential concepts are missing.
-                
-                IF THE EXPLANATION IS COMPLETE AND MATCHES THE DRAWING:
-                - Briefly praise them for their clear explanation
-                - Note how their drawing supports what they explained
-                - Express that you understand the concept now
-                - No follow-up questions needed
-                
-                IF THERE ARE DISCREPANCIES BETWEEN VERBAL AND DRAWING:
-                - Briefly mention that something they said isn't in their drawing (or vice versa)
-                - Ask them to clarify this specific discrepancy
-                - Be straightforward but gentle
-                
-                IF ESSENTIAL POINTS ARE MISSING FROM BOTH VERBAL AND DRAWING:
-                - Briefly acknowledge what you did understand
-                - Ask ONE focused question about the most critical missing element
-                - If there's also a verbal/drawing discrepancy, ask ONE question about that
-                - Maximum TWO questions total
-                
-                IMPORTANT RULES:
-                - Never reveal what's in the expert explanation
-                - Keep responses brief and to the point (max 4-5 sentences total)
-                - Use simple language with a slight paternal tone
-                - Be warm but direct - like a grandfather who wants to understand
-                - Frame questions as genuine curiosity, not as testing
-                """
+                "content": system_prompt
             },
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "text", 
-                        "text": f"I just tried to explain '{concept_text}' to you. Here's what I said: '{transcription}'. I also drew some notes to help explain it."
+                        "text": f"Okay Grandpa, I'm trying to explain '{concept_text}'. Here's what I said this time: '{transcription}'. I also updated my drawing."
                     },
                     {
                         "type": "image_url",
@@ -91,6 +110,7 @@ def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_ex
                 ],
             },
         ],
+        # max_tokens=150 # Optional: constrain response length
     )
     return response.choices[0].message.content
 

@@ -9,7 +9,7 @@ interface DrawingCanvasProps {
   isEnabled: boolean;
   onStart: () => void;
   onCancel: () => void;
-  onDone: () => void;
+  onDone: (result?: string) => void;
   concept: string;
   onAudioStatusChange?: (isRecording: boolean) => void;
 }
@@ -368,13 +368,14 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, o
       }
       const imageFile = new File([blob], `drawing_${Date.now()}.webp`, { type: blob.type });
 
-      // Upload using your service
-      await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
+      // Upload using your service and capture the result
+      const result = await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
 
-      // Continue with original done action
-      onDone();
+      // Continue with original done action, passing the feedback text
+      onDone(result); 
     } catch (error) {
       console.error("Error handling done:", error);
+      onDone(); // Call onDone without feedback on error
     }
   };
 

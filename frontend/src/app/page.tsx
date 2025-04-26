@@ -603,9 +603,21 @@ export default function Home() {
                     onCancel={() => {
                       setIsDrawingEnabled(false);
                     }}
-                    onDone={() => {
+                    onDone={(result) => {
                       setIsDrawingEnabled(false);
                       setShowLoadingScreen(true); // Zeige den Ladebildschirm an
+                      setConceptExplanationCount(prev => prev + 1);
+                      console.log("This is the result:", result);
+                      // Access the feedback property from the result object
+                      if (result) {
+                        setOpaQuestion(result); // Set the speech bubble to the feedback text
+                        console.log("Displaying feedback from backend:", result);
+                      } else {
+                        // Fallback if no feedback (e.g., error during upload or empty feedback)
+                        const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
+                        setOpaQuestion(followUpQuestions[randomQuestionIndex]);
+                        console.log("Displaying random fallback question.");
+                      }
                     }}
                     onAudioStatusChange={(isRecording) => {
                       setIsRecordingAudio(isRecording);

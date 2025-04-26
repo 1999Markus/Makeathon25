@@ -10,6 +10,7 @@ import base64
 from .config import settings
 import traceback
 import pandas as pd
+import datetime
 
 # Create router instead of app
 router = APIRouter()
@@ -69,27 +70,39 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         concept_explanation: The explanation of the concept
         concept_text: The text of the concept
     Returns:
-        tuple: (feedback, audio_output_path)
+        tuple: (feedback, audio_output_path, transcription)
     """
     audio_output_path = None
+    transcription_text = None
+    conversation_history = ""
+    history_file_path = "conversation_history.txt"
+    
     try:
+        # Read conversation history if it exists
+        if os.path.exists(history_file_path):
+            with open(history_file_path, "r", encoding="utf-8") as f:
+                conversation_history = f.read()
+                print(f"Loaded conversation history from {history_file_path}")
+        else:
+            print("Conversation history file not found, starting new history.")
+            
         # Convert image to base64 for OpenAI API
         print("Converting image to base64...")
         with open(image_path, "rb") as image_file:
             image_data = image_file.read()
             base64_image = base64.b64encode(image_data).decode("utf-8")
-            # Use proper MIME type for WebP
             image_url = f"data:image/webp;base64,{base64_image}"
         print("Image encoded as base64 for API")
         
-        # Process the audio to get transcription (OpenAI supports WebM format)
+        # Process the audio to get transcription
         print("Processing audio transcription...")
-        transcription = transcribe_speech_input(client, audio_path)
+        transcription_obj = transcribe_speech_input(client, audio_path)
+        transcription_text = transcription_obj.text # Extract text from the transcription object
         print("Transcription completed")
         
-        # Analyze the image with audio transcription
-        print("Analyzing image with transcription...")
-        feedback = analyze_image(client, transcription, image_url, concept_explanation, concept_text)
+        # Analyze the image with audio transcription and history
+        print("Analyzing image with transcription and history...")
+        feedback = analyze_image(client, transcription_text, image_url, concept_explanation, concept_text, conversation_history)
         print("Analysis completed")
         
         # Generate audio response
@@ -98,16 +111,13 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         generate_answer_audio(client, feedback, audio_output_path)
         print(f"Audio response generated at {audio_output_path}")
         
-        return feedback, audio_output_path
+        return feedback, audio_output_path, transcription_text
     except Exception as e:
         print(f"ERROR in process_follow_up: {str(e)}")
         print(f"Traceback: {traceback.format_exc()}")
-        # Clean up output path if it was created
         if audio_output_path and os.path.exists(audio_output_path):
-            try:
-                os.remove(audio_output_path)
-            except:
-                pass
+            try: os.remove(audio_output_path)
+            except: pass
         raise e
     
 async def save_uploaded_files(audio_file, notepad):
@@ -131,6 +141,40 @@ async def save_uploaded_files(audio_file, notepad):
     print(f"Notepad image saved to {image_path}")
 
     return audio_path, image_path
+
+def save_conversation_to_history(user_input: str, ai_response: str):
+    """
+    Save conversation between user and AI to history file.
+    
+    Args:
+        user_input: Transcription of user's speech
+        ai_response: AI's response text
+        
+    Returns:
+        Path to the history file
+    """
+    print("Saving conversation to history file...")
+    
+    # Format the conversation entry with timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conversation_entry = f"\n\n--- Conversation at {timestamp} ---\n"
+    conversation_entry += f"USER: {user_input}\n\n"
+    conversation_entry += f"GRANDPA: {ai_response}\n"
+    conversation_entry += f"--- End of conversation ---"
+    
+    # Append to the conversation history file
+    history_file_path = "conversation_history.txt"
+    
+    # Check if file exists, if not create it with a header
+    file_exists = os.path.isfile(history_file_path)
+    with open(history_file_path, "a", encoding="utf-8") as history_file:
+        if not file_exists:
+            history_file.write("# Learning Companion Conversation History\n")
+            history_file.write("This file contains a record of all conversations between the user and the AI grandpa.\n\n")
+        history_file.write(conversation_entry)
+    
+    print(f"Conversation saved to {history_file_path}")
+    return history_file_path
 
 @router.post("/ask-follow-up", response_model=FollowUpResponse)
 async def ask_follow_up(
@@ -178,7 +222,7 @@ async def ask_follow_up(
         print(f"Concept text: {concept_text}")
 
         # Process the follow-up using extracted function
-        feedback, audio_output_path = process_follow_up(client, audio_path, image_path, concept_explanation, concept_text)
+        feedback, audio_output_path, transcription = process_follow_up(client, audio_path, image_path, concept_explanation, concept_text)
         
         # Read the audio file and encode it as base64
         print("Encoding audio file as base64...")
@@ -187,6 +231,9 @@ async def ask_follow_up(
             print(f"Read {len(audio_data)} bytes from response audio file")
             audio_base64 = base64.b64encode(audio_data).decode("utf-8")
         print(f"Audio encoded successfully, base64 length: {len(audio_base64)}")
+        
+        # Save the conversation to history file
+        save_conversation_to_history(transcription, feedback)
         
         print("Returning response to client")
         return {
