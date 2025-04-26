@@ -37,7 +37,7 @@ export const uploadAndPlayAudio = async ({
 
         console.log('Payload being sent:', payload);
 
-        const response = await fetch('https://localhost:8000/upload', {
+        const response = await fetch('https://localhost:8000/api/ask-follow-up', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
