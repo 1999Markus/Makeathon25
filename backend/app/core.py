@@ -2,12 +2,21 @@ from openai import OpenAI
 from pathlib import Path
 
 def transcribe_speech_input(client: OpenAI, audio_file_path: str):
-    """Transcribe audio input to text."""
-    audio_file = open(audio_file_path, "rb")
-    transcription = client.audio.transcriptions.create(
-        model="gpt-4o-transcribe",
-        file=audio_file,
-    )
+    """
+    Transcribe audio input to text.
+    
+    Args:
+        client: OpenAI client instance
+        audio_file_path: Path to the audio file (supports WebM format)
+        
+    Returns:
+        Transcription of the audio
+    """
+    with open(audio_file_path, "rb") as audio_file:
+        transcription = client.audio.transcriptions.create(
+            model="gpt-4o-transcribe", 
+            file=audio_file,
+        )
     return transcription
 
 

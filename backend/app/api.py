@@ -64,8 +64,8 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
     
     Args:
         client: OpenAI client instance
-        audio_path: Path to the temporary audio file
-        image_path: Path to the temporary image file
+        audio_path: Path to the temporary audio file (WebM format)
+        image_path: Path to the temporary image file (WebP format)
         concept_explanation: The explanation of the concept
         concept_text: The text of the concept
     Returns:
@@ -78,10 +78,11 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         with open(image_path, "rb") as image_file:
             image_data = image_file.read()
             base64_image = base64.b64encode(image_data).decode("utf-8")
-            image_url = f"data:image/jpeg;base64,{base64_image}"
+            # Use proper MIME type for WebP
+            image_url = f"data:image/webp;base64,{base64_image}"
         print("Image encoded as base64 for API")
         
-        # Process the audio to get transcription
+        # Process the audio to get transcription (OpenAI supports WebM format)
         print("Processing audio transcription...")
         transcription = transcribe_speech_input(client, audio_path)
         print("Transcription completed")
@@ -110,18 +111,19 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         raise e
     
 async def save_uploaded_files(audio_file, notepad):
-    # Save audio file temporarily
+    """Save uploaded WebM audio and WebP image files temporarily."""
+    # Save audio file temporarily (WebM format)
     print("Saving audio file temporarily...")
-    audio_path = f"temp_audio_{uuid.uuid4()}.wav"
+    audio_path = f"temp_audio_{uuid.uuid4()}.webm"
     with open(audio_path, "wb") as f:
         audio_content = await audio_file.read()
         print(f"Read {len(audio_content)} bytes from audio file")
         f.write(audio_content)
     print(f"Audio file saved to {audio_path}")
     
-    # Save notepad image temporarily
+    # Save notepad image temporarily (WebP format)
     print("Saving notepad image temporarily...")
-    image_path = f"temp_image_{uuid.uuid4()}.jpg"
+    image_path = f"temp_image_{uuid.uuid4()}.webp"
     with open(image_path, "wb") as f:
         image_content = await notepad.read()
         print(f"Read {len(image_content)} bytes from notepad image")
@@ -133,16 +135,16 @@ async def save_uploaded_files(audio_file, notepad):
 @router.post("/ask-follow-up", response_model=FollowUpResponse)
 async def ask_follow_up(
     concept_id: str = Form(..., description="ID of the concept being explained"),
-    audio_file: UploadFile = File(..., description="Audio recording of the explanation"),
-    notepad_image: UploadFile = File(..., description="Image of drawn notes or diagram")
+    audio_file: UploadFile = File(..., description="Audio recording of the explanation (WebM format)"),
+    notepad_image: UploadFile = File(..., description="Image of drawn notes or diagram (WebP format)")
 ):
     """
     Process a follow-up question with audio explanation and notepad drawing.
     
     Args:
         concept_id: ID of the concept being explained
-        audio_file: Audio recording of the user's explanation
-        notepad: Image of the user's drawn notes
+        audio_file: Audio recording of the user's explanation (WebM format)
+        notepad_image: Image of the user's drawn notes (WebP format)
         
     Returns:
         JSON response with feedback and base64-encoded audio data
@@ -150,7 +152,8 @@ async def ask_follow_up(
 
     # Log that the function was called
     print(f"ask_follow_up function called with concept: {concept_id}")
-    print(f"Audio file: {audio_file.filename}, Notepad file: {notepad_image.filename}")
+    print(f"Audio file: {audio_file.filename} ({audio_file.content_type})")
+    print(f"Notepad file: {notepad_image.filename} ({notepad_image.content_type})")
     
     # Create OpenAI client
     print("Creating OpenAI client...")

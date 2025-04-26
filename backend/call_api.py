@@ -10,8 +10,8 @@ def call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path):
     Args:
         base_url: The base URL of the API (e.g., "http://localhost:8000")
         concept: The concept being explained
-        audio_file_path: Path to the audio file containing the explanation
-        notepad_image_path: Path to the image file with drawn notes
+        audio_file_path: Path to the WebM audio file containing the explanation
+        notepad_image_path: Path to the WebP image file with drawn notes
         
     Returns:
         The JSON response from the API
@@ -22,10 +22,10 @@ def call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path):
     # Prepare form data
     form_data = {"concept_id": concept}
     
-    # Prepare files
+    # Prepare files with correct MIME types
     files = {
-        "audio_file": (os.path.basename(audio_file_path), open(audio_file_path, "rb"), "audio/wav"),
-        "notepad": (os.path.basename(notepad_image_path), open(notepad_image_path, "rb"), "image/jpeg")
+        "audio_file": (os.path.basename(audio_file_path), open(audio_file_path, "rb"), "audio/webm"),
+        "notepad_image": (os.path.basename(notepad_image_path), open(notepad_image_path, "rb"), "image/webp")
     }
     
     try:
@@ -50,8 +50,8 @@ def main():
     # Example usage
     base_url = "http://localhost:8000/api"
     concept = "1"
-    audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/example_explanation.wav"
-    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/bad_example_notepad.jpg"
+    audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/example_explanation.webm"
+    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/example_notepad.webp"
     
     # Call the API
     response = call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path)
@@ -64,9 +64,9 @@ def main():
         # Optionally, save the audio data to a file
         audio_data = response.get('audio_data')
         if audio_data:
-            with open("grandma_response.mp3", "wb") as audio_file:
+            with open("grandpa_response.mp3", "wb") as audio_file:
                 audio_file.write(base64.b64decode(audio_data))
-            print("Response audio saved to grandma_response.mp3")
+            print("Response audio saved to grandpa_response.mp3")
 
 
 if __name__ == "__main__":
