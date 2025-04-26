@@ -97,8 +97,15 @@ async def ask_follow_up(
     Returns:
         JSON response with feedback and base64-encoded audio data
     """
+
+    # Log that the function was called
+    print(f"ask_follow_up function called with concept: {concept}")
+    print(f"Audio file: {audio_file.filename}, Notepad file: {notepad.filename}")
+    
     # Create OpenAI client
+    print("Creating OpenAI client...")
     client = OpenAI(api_key=settings.openai_api_key)
+    print("OpenAI client created successfully")
     
     # Initialize paths as None to handle cleanup in finally block
     audio_path = None
@@ -107,45 +114,76 @@ async def ask_follow_up(
     
     try:
         # Save audio file temporarily
+        print("Saving audio file temporarily...")
         audio_path = f"temp_audio_{uuid.uuid4()}.wav"
         with open(audio_path, "wb") as f:
-            f.write(await audio_file.read())
+            audio_content = await audio_file.read()
+            print(f"Read {len(audio_content)} bytes from audio file")
+            f.write(audio_content)
+        print(f"Audio file saved to {audio_path}")
         
         # Save notepad image temporarily
+        print("Saving notepad image temporarily...")
         image_path = f"temp_image_{uuid.uuid4()}.jpg"
         with open(image_path, "wb") as f:
-            f.write(await notepad.read())
+            image_content = await notepad.read()
+            print(f"Read {len(image_content)} bytes from notepad image")
+            f.write(image_content)
+        print(f"Notepad image saved to {image_path}")
             
-        # Use a file URL for local testing
-        image_url = f"file://{os.path.abspath(image_path)}"
+        # Convert image to base64 for OpenAI API
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+            base64_image = base64.b64encode(image_data).decode("utf-8")
+            image_url = f"data:image/jpeg;base64,{base64_image}"
+        print(f"Image encoded as base64 for API")
         
         # Process the audio to get transcription
+        print("Processing audio transcription...")
         transcription = read_and_transcribe_audio(client, audio_path)
+        print(f"Transcription completed")
         
         # Analyze the image with audio transcription
+        print("Analyzing image with transcription...")
         feedback = analyze_image(client, transcription, image_url)
+        print(f"Analysis completed")
         
         # Generate audio response
+        print("Generating audio response...")
         audio_output_path = f"temp_response_{uuid.uuid4()}.mp3"
         generate_answer_audio(client, feedback, audio_output_path)
+        print(f"Audio response generated at {audio_output_path}")
         
         # Read the audio file and encode it as base64
+        print("Encoding audio file as base64...")
         with open(audio_output_path, "rb") as audio_file:
             audio_data = audio_file.read()
+            print(f"Read {len(audio_data)} bytes from response audio file")
             audio_base64 = base64.b64encode(audio_data).decode("utf-8")
+        print(f"Audio encoded successfully, base64 length: {len(audio_base64)}")
         
+        print("Returning response to client")
         return {
             "feedback": feedback,
             "audio_data": audio_base64
         }
         
     except Exception as e:
+        print(f"ERROR in ask_follow_up: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
         
     finally:
+        print("Cleaning up temporary files...")
         # Clean up temporary files
         for path in [audio_path, image_path, audio_output_path]:
             if path and os.path.exists(path):
-                os.remove(path)
+                try:
+                    os.remove(path)
+                    print(f"Removed temporary file: {path}")
+                except Exception as e:
+                    print(f"Failed to remove temporary file {path}: {str(e)}")
+        print("Cleanup completed")
 
     
