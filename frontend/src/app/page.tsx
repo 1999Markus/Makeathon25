@@ -33,6 +33,9 @@ export default function Home() {
   const [hasStartedExplaining, setHasStartedExplaining] = useState(false);
   const [opaQuestion, setOpaQuestion] = useState<string | null>(null);
   const [canvasKey, setCanvasKey] = useState<number>(0);
+  const [conceptExplanationCount, setConceptExplanationCount] = useState<number>(0);
+  const [showingFeedback, setShowingFeedback] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string>("");
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
 
@@ -171,10 +174,10 @@ export default function Home() {
   const handleLectureSelect = (lecture: Lecture) => {
     setSelectedLecture(lecture);
     setSelectedConcept(lecture.concepts?.[0] || null);
-
     setAppState('drawing');
     setOpaQuestion(null);
     setHasStartedExplaining(false);
+    setConceptExplanationCount(0); // Reset concept count for new lecture
   };
 
   const handleConceptSelect = (concept: Concept) => {
@@ -182,6 +185,7 @@ export default function Home() {
     setIsConceptsPanelOpen(false);
     setOpaQuestion(null);
     setHasStartedExplaining(false);
+    setConceptExplanationCount(0); // Reset concept count for new concept
   };
 
   // --- Concept Navigation Logic ---
@@ -192,6 +196,10 @@ export default function Home() {
     if (!selectedLecture || totalConcepts <= 1 || currentConceptIndex === -1) return;
     const nextIndex = (currentConceptIndex + 1) % totalConcepts;
     setSelectedConcept(selectedLecture.concepts[nextIndex]);
+    // Reset explanation state when navigating to a new concept
+    setHasStartedExplaining(false);
+    setOpaQuestion(null);
+    setConceptExplanationCount(0); // Reset concept count when changing concept
   };
 
   const handlePreviousConcept = () => {
@@ -202,6 +210,17 @@ export default function Home() {
 
   const canNavigateConcepts = totalConcepts > 1;
   // --- End Concept Navigation Logic ---
+
+  // Array von möglichen Feedback-Nachrichten
+  const feedbackMessages = [
+    "Great job! I particularly liked how you explained the core concept in simple terms. That made it much easier for me to understand.",
+    "Thank you for your explanation. I now understand the basic idea, though I still have some questions about the practical applications.",
+    "That was very clear! The drawing really helped me visualize how this concept works in practice.",
+    "I appreciate your patience. This was a difficult concept, but you broke it down nicely for me.",
+    "Well done! Your explanation was structured and easy to follow. I especially liked your examples.",
+    "Interesting explanation! I can see you have a good grasp of this topic. Maybe next time you could explain a bit more about why this is important?",
+    "Thank you for your clear explanation. The way you connected this to real-world examples made it much more relatable for me."
+  ];
 
   // Array von möglichen Fragen, die Opa stellen kann
   const followUpQuestions = [
@@ -390,14 +409,19 @@ export default function Home() {
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col justify-center items-center relative">
             {/* Left Side - Speech Bubble */}
-            <div className="absolute top-20 left-5 w-[400px] z-20">
+            <div className="absolute top-20 left-5 w-[400px] z-50">
               <div className="relative bg-white p-8 rounded-3xl shadow-lg">
                 {/* Speech bubble tail pointing right */}
                 <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-6 bg-white transform -translate-x-3 rotate-45" />
                 <div className="relative z-10">
                   <p className="text-lg mt-2">
-                    {opaQuestion ? opaQuestion : 
-                      `Please explain the concept of ${selectedConcept?.title.toLowerCase() || 'this concept'} to me`
+                    {showingFeedback ? feedbackMessage : 
+                      (conceptExplanationCount >= 3 ? 
+                        "Thank you for your explanations! Would you like to get some feedback on how well I understood?" : 
+                        (opaQuestion ? opaQuestion : 
+                          `Please explain the concept of ${selectedConcept?.title.toLowerCase() || 'this concept'} to me`
+                        )
+                      )
                     }
                   </p>
                 </div>
@@ -407,7 +431,7 @@ export default function Home() {
             {/* Drawing Area Container */}
             <div className="relative flex flex-col items-center">
               {/* Grandpa Image with Animation */}
-              <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-10`}>
+              <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-40`}>
                 <style jsx>{`
                   @keyframes breathing {
                     0% { transform: scale(1.000); }
@@ -478,19 +502,93 @@ export default function Home() {
               <div className="w-[900px] mx-auto mt-[300px] relative flex items-center">
                 <div className="flex-1">
                   {!isDrawingEnabled && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
-                      <button
-                        onClick={() => {
-                          setIsDrawingEnabled(true);
-                          // Only reset the question when starting to explain a new concept, not when continuing
-                          if (!hasStartedExplaining && !opaQuestion) {
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
+                      {/* Halbdurchsichtiger Overlay für die Zeichenfläche */}
+                      <div className="absolute inset-0 bg-black/50 rounded-3xl"></div>
+                      
+                      {conceptExplanationCount < 3 ? (
+                        // Normal continue button when count < 3
+                        <button
+                          onClick={() => {
+                            setIsDrawingEnabled(true);
+                            // Only reset the question when starting to explain a new concept, not when continuing
+                            if (!hasStartedExplaining && !opaQuestion) {
+                              setOpaQuestion(null);
+                            }
+                          }}
+                          className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105 z-10 mb-4"
+                        >
+                          {hasStartedExplaining || opaQuestion ? 'Continue explaining to grandpa' : 'Start explaining to grandpa'}
+                        </button>
+                      ) : showingFeedback ? (
+                        // Button to proceed after feedback
+                        <button
+                          onClick={() => {
+                            setShowingFeedback(false);
+                            setConceptExplanationCount(0);
+                            // Force canvas to clear by incrementing the key
+                            setCanvasKey(prev => prev + 1);
+                            
+                            // Check if there are more concepts
+                            if (currentConceptIndex !== -1 && totalConcepts > 1) {
+                              // Move to next concept
+                              handleNextConcept();
+                            } else {
+                              // Reset current concept to initial state if no more concepts
+                              setHasStartedExplaining(false);
+                              setOpaQuestion(null);
+                            }
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105 z-10 mb-4"
+                        >
+                          Next Concept
+                        </button>
+                      ) : (
+                        // Get feedback button after 3 explanations
+                        <button
+                          onClick={() => {
+                            // Set random feedback message
+                            const randomIndex = Math.floor(Math.random() * feedbackMessages.length);
+                            setFeedbackMessage(feedbackMessages[randomIndex]);
+                            setShowingFeedback(true);
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105 z-10 mb-4"
+                        >
+                          Get feedback
+                        </button>
+                      )}
+                      
+                      {/* Next Concept Button innerhalb des Overlays - immer anzeigen, ggf. deaktivieren */}
+                      {(hasStartedExplaining || opaQuestion) && !showingFeedback && (
+                        <button
+                          onClick={() => {
+                            // Reset drawing state
+                            setIsDrawingEnabled(false);
+                            // Reset all explanations and questions
+                            setHasStartedExplaining(false);
                             setOpaQuestion(null);
-                          }
-                        }}
-                        className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105"
-                      >
-                        {hasStartedExplaining || opaQuestion ? 'Continue explaining to grandpa' : 'Start explaining to grandpa'}
-                      </button>
+                            // Force canvas to clear by incrementing the key
+                            setCanvasKey(prev => prev + 1);
+                            
+                            // Check if there are more concepts
+                            if (currentConceptIndex !== -1 && totalConcepts > 1) {
+                              // Move to next concept
+                              handleNextConcept();
+                            } else {
+                              // Reset current concept to initial state if no more concepts
+                              setConceptExplanationCount(0);
+                            }
+                          }}
+                          disabled={!canNavigateConcepts}
+                          className={`py-3 px-6 rounded-lg shadow-md transform transition-transform z-10 ${
+                            canNavigateConcepts 
+                              ? 'bg-[#4285f4] hover:bg-[#3b78e7] text-white hover:scale-105' 
+                              : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                          }`}
+                        >
+                          Next Concept
+                        </button>
+                      )}
                     </div>
                   )}
                   <DrawingCanvas 
@@ -504,6 +602,8 @@ export default function Home() {
                     }}
                     onDone={() => {
                       setIsDrawingEnabled(false);
+                      // Increment the explanation count
+                      setConceptExplanationCount(prev => prev + 1);
                       // Zufällige Rückfrage vom Opa auswählen
                       const randomQuestionIndex = Math.floor(Math.random() * followUpQuestions.length);
                       setOpaQuestion(followUpQuestions[randomQuestionIndex]);
@@ -552,28 +652,6 @@ export default function Home() {
                     <p className="text-xs text-gray-500 mt-1 font-sans">complete</p>
                   </div>
                 </div>
-
-                {/* Add the Next Concept button below the drawing canvas */}
-                {(hasStartedExplaining || opaQuestion) && canNavigateConcepts && !isDrawingEnabled && (
-                  <div className="absolute bottom-[8px] left-1/2 transform -translate-x-1/2 z-50">
-                    <button
-                      onClick={() => {
-                        // Reset drawing state
-                        setIsDrawingEnabled(false);
-                        // Reset all explanations and questions
-                        setHasStartedExplaining(false);
-                        setOpaQuestion(null);
-                        // Force canvas to clear by incrementing the key
-                        setCanvasKey(prev => prev + 1);
-                        // Move to next concept
-                        handleNextConcept();
-                      }}
-                      className="bg-[#4285f4] hover:bg-[#3b78e7] text-white py-3 px-6 rounded-lg shadow-md transform transition-transform hover:scale-105"
-                    >
-                      Next Concept
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
