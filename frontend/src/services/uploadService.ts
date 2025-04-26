@@ -7,10 +7,12 @@ export const uploadAndPlayAudio = async ({
     imageFile: File,
     conceptText: string
 }) => {
+    // Create FormData with exact parameter names matching the backend
     const formData = new FormData();
     formData.append('concept_id', conceptText);
     formData.append('audio_file', audioFile);
-    formData.append('notepad', imageFile);
+    formData.append('notepad_image', imageFile);
+    
 
     try {
         const response = await fetch('http://localhost:8000/api/ask-follow-up', {
@@ -19,7 +21,9 @@ export const uploadAndPlayAudio = async ({
         });
 
         if (!response.ok) {
-            throw new Error('Failed to upload');
+            const errorText = await response.text();
+            console.error(`Upload failed: ${response.status}`, errorText);
+            throw new Error(`Failed to upload: ${response.status} ${errorText}`);
         }
 
         const blob = await response.blob();
