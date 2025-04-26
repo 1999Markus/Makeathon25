@@ -71,18 +71,19 @@ export function LectureList({ lectures, onLectureSelect }: LectureListProps) {
   );
 }
 
-// Function to generate consistent colors based on lecture ID
+// Function to generate consistent blue shades based on lecture ID
 function getRandomColor(id: string): string {
-  const colors = [
-    '#4285f4', // Google Blue
-    '#5cb85c', // Bootstrap Green
-    '#d9534f', // Bootstrap Red
-    '#f4b400', // Google Yellow
-    '#0f9d58', // Google Green
-    '#db4437', // Google Red
-    '#4285f4', // Google Blue
-    '#f4b400', // Google Yellow
+  const blueShades = [
+    '#bbdefb', // Light Blue 100
+    '#90caf9', // Light Blue 300
+    '#64b5f6', // Light Blue 400
+    '#42a5f5', // Blue 500
+    '#2196f3', // Blue 600
+    '#1e88e5', // Blue 700
+    '#1976d2', // Blue 800
+    '#1565c0', // Blue 900
   ];
   
-  return colors[parseInt(id) - 1] || colors[0];
-} 
+  const index = parseInt(id) % blueShades.length;
+  return blueShades[index];
+}

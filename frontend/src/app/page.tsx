@@ -8,7 +8,7 @@ import Image from "next/image";
 import { ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-type AppState = 'welcome' | 'lectureSelect' | 'drawing';
+type AppState = 'welcome' | 'drawing';
 
 interface Concept {
   id: string;
@@ -26,20 +26,11 @@ interface Lecture {
 const LECTURES: Lecture[] = [
   {
     id: '1',
-    title: 'Machine Learning Lecture I',
+    title: 'Machine Learning',
     concepts: [
       { id: '1-1', title: 'Linear Classification', description: 'How to separate data points with a line' },
       { id: '1-2', title: 'Gradient Descent', description: 'Finding the minimum of a function step by step' },
       { id: '1-3', title: 'Overfitting', description: 'When your model learns the noise in the data' },
-    ]
-  },
-  {
-    id: '2',
-    title: 'Machine Learning Lecture II',
-    concepts: [
-      { id: '2-1', title: 'Decision Trees', description: 'Making decisions by asking yes/no questions' },
-      { id: '2-2', title: 'Random Forests', description: 'Combining multiple decision trees' },
-      { id: '2-3', title: 'Cross Validation', description: 'Testing your model on different data splits' },
     ]
   },
   {
@@ -58,15 +49,6 @@ const LECTURES: Lecture[] = [
       { id: '4-1', title: 'Search Algorithms', description: 'Finding paths in a maze of possibilities' },
       { id: '4-2', title: 'Expert Systems', description: 'Making decisions based on rules' },
       { id: '4-3', title: 'Game Theory', description: 'Strategic decision making' },
-    ]
-  },
-  {
-    id: '5',
-    title: 'Neural Networks',
-    concepts: [
-      { id: '5-1', title: 'Perceptrons', description: 'The building blocks of neural networks' },
-      { id: '5-2', title: 'Hidden Layers', description: 'Adding depth to neural networks' },
-      { id: '5-3', title: 'Weight Initialization', description: 'Starting your network right' },
     ]
   },
   {
@@ -161,7 +143,7 @@ export default function Home() {
   if (appState === 'welcome') {
     return (
       <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center justify-center">
-        <div className="max-w-4xl w-full flex items-center gap-8">
+        <div className="max-w-6xl w-full flex items-center gap-8">
           {/* Left side with Grandma */}
           <div className="w-[400px] h-[400px] relative flex-shrink-0">
             <Image
@@ -173,66 +155,18 @@ export default function Home() {
             />
           </div>
           
-          {/* Right side with speech bubble and button */}
+          {/* Right side with speech bubble and lecture list */}
           <div className="flex-1 flex flex-col gap-8">
             {/* Speech Bubble */}
             <div className="relative bg-white p-6 rounded-3xl shadow-lg">
               <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
               <p className="text-3xl font-handwriting relative z-10">
-                Welcome back my dear. Let's get it started!
+                Welcome back my dear! Choose a lecture you want to explain to me.
               </p>
             </div>
 
-            {/* Button */}
-            <button
-              onClick={() => setAppState('lectureSelect')}
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105 w-full text-center"
-            >
-              Start explaining to your granny
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (appState === 'lectureSelect') {
-    return (
-      <div className="min-h-screen bg-[#e6f7ff] p-8 flex items-center">
-        {/* Left side with Grandma and Back Button */}
-        <div className="w-[400px] flex-shrink-0 flex flex-col items-center">
-          <div className="w-[400px] h-[400px] relative">
-            <Image
-              src="/happy_grandma.png"
-              alt="Happy Grandma"
-              fill
-              style={{ objectFit: 'contain' }}
-              priority
-            />
-          </div>
-          <button
-            onClick={() => setAppState('welcome')}
-            className="mt-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to start
-          </button>
-        </div>
-        
-        {/* Right side with speech bubble and content */}
-        <div className="flex-1 ml-8">
-          <div className="bg-white rounded-3xl shadow-lg p-6 relative">
-            {/* Speech bubble arrow */}
-            <div className="absolute left-0 top-1/2 -translate-x-4 -translate-y-1/2 w-8 h-8 bg-white transform rotate-45" />
-            
-            {/* Content container */}
-            <div className="relative z-10">
-              {/* Fixed header */}
-              <p className="text-3xl font-handwriting mb-6">
-                Choose a lecture you want to explain to me
-              </p>
-              
-              {/* Scrollable lecture list */}
+            {/* Lecture List */}
+            <div className="bg-white rounded-3xl shadow-lg p-6">
               <LectureList onLectureSelect={handleLectureSelect} lectures={LECTURES} />
             </div>
           </div>
@@ -249,7 +183,7 @@ export default function Home() {
           {/* Back Navigation */}
           <button
             onClick={() => {
-              setAppState('lectureSelect');
+              setAppState('welcome');
               setIsDrawingEnabled(false);
             }}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
@@ -348,7 +282,7 @@ export default function Home() {
                   }}
                   onDone={() => {
                     setIsDrawingEnabled(false);
-                    setAppState('lectureSelect');
+                    setAppState('welcome');
                   }}
                 />
               </div>
