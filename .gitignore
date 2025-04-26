@@ -73,3 +73,19 @@ coverage
 *.swp
 *.swo
 .DS_Store
+
+# Audio files
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.aac
+*.flac
+
+# Image files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
