@@ -104,6 +104,7 @@ export default function Home() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const [grandmaEmotion, setGrandmaEmotion] = useState<GrandmaEmotion>('happy');
   const [isConceptsPanelOpen, setIsConceptsPanelOpen] = useState(false);
+  const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
@@ -129,14 +130,33 @@ export default function Home() {
 
   const handleLectureSelect = (lecture: Lecture) => {
     setSelectedLecture(lecture);
-    setSelectedConcept(null);
+    setSelectedConcept(lecture.concepts?.[0] || null);
     setAppState('drawing');
   };
 
   const handleConceptSelect = (concept: Concept) => {
     setSelectedConcept(concept);
-    setIsConceptsPanelOpen(false); // Close panel after selection
+    setIsConceptsPanelOpen(false);
   };
+
+  // --- Concept Navigation Logic ---
+  const currentConceptIndex = selectedLecture?.concepts.findIndex(c => c.id === selectedConcept?.id) ?? -1;
+  const totalConcepts = selectedLecture?.concepts.length ?? 0;
+
+  const handleNextConcept = () => {
+    if (!selectedLecture || totalConcepts <= 1 || currentConceptIndex === -1) return;
+    const nextIndex = (currentConceptIndex + 1) % totalConcepts;
+    setSelectedConcept(selectedLecture.concepts[nextIndex]);
+  };
+
+  const handlePreviousConcept = () => {
+    if (!selectedLecture || totalConcepts <= 1 || currentConceptIndex === -1) return;
+    const prevIndex = (currentConceptIndex - 1 + totalConcepts) % totalConcepts;
+    setSelectedConcept(selectedLecture.concepts[prevIndex]);
+  };
+
+  const canNavigateConcepts = totalConcepts > 1;
+  // --- End Concept Navigation Logic ---
 
   if (appState === 'welcome') {
     return (
@@ -221,134 +241,177 @@ export default function Home() {
     );
   }
 
-  return (
-    <div className="h-screen bg-[#e6f7ff] flex overflow-hidden">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col p-8">
-        {/* Back Navigation */}
-        <button
-          onClick={() => setAppState('lectureSelect')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to lectures
-        </button>
+  if (appState === 'drawing') {
+    return (
+      <div className="h-screen bg-[#e6f7ff] flex overflow-hidden">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col p-8">
+          {/* Back Navigation */}
+          <button
+            onClick={() => {
+              setAppState('lectureSelect');
+              setIsDrawingEnabled(false);
+            }}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-handwriting text-xl"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to lectures
+          </button>
 
-        {/* Header with Course and Concept */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="text-gray-600 font-handwriting">
-            {selectedLecture?.title || "Machine Learning I"}
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="font-handwriting text-[#4285f4]">
-              Concept: {selectedConcept?.title || "Linear Classification"}
-            </div>
-            <button className="p-2">
-              <ArrowLeft className="w-5 h-5 rotate-180" />
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content Area with Speech Bubble and Drawing */}
-        <div className="flex gap-8 mt-4 h-[calc(100vh-180px)]">
-          {/* Left Side - Speech Bubble */}
-          <div className="w-[400px] flex-shrink-0">
-            <div className="bg-white p-6 rounded-3xl shadow-lg">
-              <p className="text-2xl font-handwriting text-[#20B2AA]">
-                Granny:
-              </p>
-              <p className="text-xl font-handwriting mt-2">
-                Please explain the concept of linear classification to me
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side - Drawing Area with Grandma */}
-          <div className="flex-1 relative">
-            {/* Grandma Image - Absolute position, adjusted lower */}
-            <div className="absolute top-[20px] left-[calc(20%-180px)] w-[700px] h-[300px] z-10">
-              <div className="relative w-full h-full">
-                <Image
-                  src="/leaningforward_grandma.png"
-                  alt="Grandma leaning forward"
-                  fill
-                  style={{ 
-                    objectFit: 'contain',
-                    objectPosition: 'center bottom'
-                  }}
-                  priority
-                />
+          {/* Header and New Overview Box Container */}
+          <div className="relative mb-4">
+            {/* Existing Header (Lecture Title) */}
+            <div className="flex items-center justify-between">
+              <div className="text-gray-600 font-handwriting">
+                {selectedLecture?.title || "Lecture"}
               </div>
             </div>
 
-            {/* Drawing Canvas and Controls - Adjusted margin-top lower */}
-            <div className="w-[800px] mx-auto mt-[300px]">
-              <DrawingCanvas 
-                isEnabled={true}
-                onStart={() => {}}
-                onCancel={() => setSelectedConcept(null)}
-              />
+            {/* Concept Overview Box (Top Right) - With Navigation */}
+            <div className="absolute top-35 right-10 w-[400px] bg-white p-8 rounded-2xl shadow-lg flex items-center gap-4 z-20">
+              <button 
+                onClick={handlePreviousConcept} 
+                disabled={!canNavigateConcepts} 
+                className="p-1 text-purple-600 hover:text-purple-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <div className="text-center flex-1">
+                <div className="text-sm text-gray-500 font-sans mb-1">{selectedLecture?.title || "Lecture"}</div>
+                <div className="font-handwriting text-xl text-[#4285f4]">
+                  {selectedConcept?.title || "Concept"}
+                </div>
+              </div>
+              <button 
+                onClick={handleNextConcept} 
+                disabled={!canNavigateConcepts} 
+                className="p-1 text-purple-600 hover:text-purple-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+              >
+                <ArrowLeft className="w-6 h-6 rotate-180" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col justify-center items-center relative">
+            {/* Left Side - Speech Bubble */}
+            <div className="absolute top-20 left-5 w-[400px] z-20">
+              <div className="relative bg-white p-8 rounded-3xl shadow-lg">
+                {/* Speech bubble tail pointing right */}
+                <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-6 bg-white transform -translate-x-3 rotate-45" />
+                <div className="relative z-10">
+                  <p className="text-2xl font-handwriting text-[#20B2AA]">
+                    Granny:
+                  </p>
+                  <p className="text-xl font-handwriting mt-2">
+                    Please explain the concept of {selectedConcept?.title.toLowerCase() || 'this concept'} to me
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Drawing Area Container */}
+            <div className="relative flex flex-col items-center">
+              {/* Grandma Image */}
+              <div className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-10">
+                <div className="relative w-full h-full">
+                  <Image
+                    src="/leaningforward_grandma.png"
+                    alt="Grandma leaning forward"
+                    fill
+                    style={{ 
+                      objectFit: 'contain',
+                      objectPosition: 'center bottom'
+                    }}
+                    priority
+                  />
+                </div>
+              </div>
+
+              {/* Drawing Canvas and Controls */}
+              <div className="w-[900px] mx-auto mt-[300px] relative">
+                {!isDrawingEnabled && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg z-30">
+                    <button
+                      onClick={() => setIsDrawingEnabled(true)}
+                      className="bg-[#4285f4] hover:bg-[#3b78e7] text-white text-2xl font-handwriting py-4 px-8 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
+                    >
+                      Start explaining to granny
+                    </button>
+                  </div>
+                )}
+                <DrawingCanvas 
+                  isEnabled={isDrawingEnabled}
+                  onStart={() => {}}
+                  onCancel={() => {
+                    setIsDrawingEnabled(false);
+                  }}
+                  onDone={() => {
+                    setIsDrawingEnabled(false);
+                    setAppState('lectureSelect');
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle Button for Concepts Panel */}
+        <button
+          ref={toggleButtonRef}
+          onClick={() => setIsConceptsPanelOpen(!isConceptsPanelOpen)}
+          className={cn(
+            "fixed right-0 top-1/2 -translate-y-1/2 bg-[#4285f4] text-white p-2 rounded-l-xl transition-transform z-20",
+            isConceptsPanelOpen && "translate-x-[300px]"
+          )}
+        >
+          <ArrowLeft className={cn(
+            "w-6 h-6 transition-transform",
+            isConceptsPanelOpen && "rotate-180"
+          )} />
+        </button>
+
+        {/* Right Side Panel - Concepts */}
+        <div
+          ref={conceptsPanelRef}
+          className={cn(
+            "fixed right-0 top-0 h-screen w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-30",
+            isConceptsPanelOpen ? "translate-x-0" : "translate-x-full"
+          )}
+        >
+          <div className="p-4 bg-[#4285f4] text-white">
+            <h2 className="font-handwriting text-xl text-center">Choose what to explain</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-1 gap-2">
+              {selectedLecture?.concepts.map((concept) => (
+                <button
+                  key={concept.id}
+                  onClick={() => handleConceptSelect(concept)}
+                  className={cn(
+                    "text-left p-3 rounded-lg transition-colors",
+                    selectedConcept?.id === concept.id
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-50 hover:bg-gray-100"
+                  )}
+                >
+                  <h3 className="text-lg font-handwriting mb-0.5">{concept.title}</h3>
+                  <p className={cn(
+                    "text-sm",
+                    selectedConcept?.id === concept.id
+                      ? "text-blue-50"
+                      : "text-gray-600"
+                  )}>
+                    {concept.description}
+                  </p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Toggle Button for Concepts Panel */}
-      <button
-        ref={toggleButtonRef}
-        onClick={() => setIsConceptsPanelOpen(!isConceptsPanelOpen)}
-        className={cn(
-          "fixed right-0 top-1/2 -translate-y-1/2 bg-[#4285f4] text-white p-2 rounded-l-xl transition-transform z-20",
-          isConceptsPanelOpen && "translate-x-[300px]"
-        )}
-      >
-        <ArrowLeft className={cn(
-          "w-6 h-6 transition-transform",
-          isConceptsPanelOpen && "rotate-180"
-        )} />
-      </button>
-
-      {/* Right Side Panel - Concepts */}
-      <div
-        ref={conceptsPanelRef}
-        className={cn(
-          "fixed right-0 top-0 h-screen w-[300px] bg-white shadow-lg flex flex-col transition-transform duration-300 z-10",
-          isConceptsPanelOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        <div className="p-4 bg-[#4285f4] text-white">
-          <h2 className="font-handwriting text-xl text-center">Choose what to explain</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 gap-2">
-            {selectedLecture?.concepts.map((concept) => (
-              <button
-                key={concept.id}
-                onClick={() => handleConceptSelect(concept)}
-                className={cn(
-                  "text-left p-3 rounded-lg transition-colors",
-                  selectedConcept?.id === concept.id
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-50 hover:bg-gray-100"
-                )}
-              >
-                <h3 className="text-lg font-handwriting mb-0.5">{concept.title}</h3>
-                <p className={cn(
-                  "text-sm",
-                  selectedConcept?.id === concept.id
-                    ? "text-blue-50"
-                    : "text-gray-600"
-                )}>
-                  {concept.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
