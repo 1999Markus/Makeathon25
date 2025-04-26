@@ -78,14 +78,15 @@ export default function Home() {
           },
         });
         const conceptsFromBackend = await response.json();
+
         if (response.ok) {
           concepts = conceptsFromBackend.map((c: any, index: number) => ({
-            id: c.id ?? `concept-${index}`,
-            title: c.concept ?? "Untitled Concept",
-            description: c.answer ?? "No description available",
+            id: c?.[0] ?? `${index}`,
+            title: c?.[1] ?? "Untitled Concept",
+            description: c?.[2] ?? "No description available",
           }));
         } else {
-          concepts = [{id: '1', title: "No Concepts", description: "No text available."}]
+          concepts = [{ id: '1', title: "No Concepts", description: "No text available." }];
         }
 
       } catch (error) {
