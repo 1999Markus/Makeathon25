@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { DrawingCanvas } from "../components/DrawingCanvas";
-import { LectureList } from "@/components/LectureList";
 import Image from "next/image";
 import { ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -22,64 +21,6 @@ interface Lecture {
   concepts: Concept[];
 }
 
-// Dummy data for lectures and their concepts
-const LECTURES: Lecture[] = [
-  {
-    id: '1',
-    title: 'Machine Learning',
-    concepts: [
-      { id: '1-1', title: 'Linear Classification', description: 'How to separate data points with a line' },
-      { id: '1-2', title: 'Gradient Descent', description: 'Finding the minimum of a function step by step' },
-      { id: '1-3', title: 'Overfitting', description: 'When your model learns the noise in the data' },
-    ]
-  },
-  {
-    id: '3',
-    title: 'Deep Learning',
-    concepts: [
-      { id: '3-1', title: 'Neural Networks', description: 'Brain-inspired learning machines' },
-      { id: '3-2', title: 'Backpropagation', description: 'How neural networks learn from mistakes' },
-      { id: '3-3', title: 'Activation Functions', description: 'Adding non-linearity to networks' },
-    ]
-  },
-  {
-    id: '4',
-    title: 'Fundamentals of AI',
-    concepts: [
-      { id: '4-1', title: 'Search Algorithms', description: 'Finding paths in a maze of possibilities' },
-      { id: '4-2', title: 'Expert Systems', description: 'Making decisions based on rules' },
-      { id: '4-3', title: 'Game Theory', description: 'Strategic decision making' },
-    ]
-  },
-  {
-    id: '6',
-    title: 'Computer Vision',
-    concepts: [
-      { id: '6-1', title: 'Convolution', description: 'Finding patterns in images' },
-      { id: '6-2', title: 'Pooling', description: 'Summarizing image features' },
-      { id: '6-3', title: 'Object Detection', description: 'Finding things in images' },
-    ]
-  },
-  {
-    id: '7',
-    title: 'Natural Language Processing',
-    concepts: [
-      { id: '7-1', title: 'Tokenization', description: 'Breaking text into pieces' },
-      { id: '7-2', title: 'Word Embeddings', description: 'Representing words as numbers' },
-      { id: '7-3', title: 'Attention', description: 'Focusing on important words' },
-    ]
-  },
-  {
-    id: '8',
-    title: 'Reinforcement Learning',
-    concepts: [
-      { id: '8-1', title: 'Q-Learning', description: 'Learning from rewards and punishments' },
-      { id: '8-2', title: 'Policy Gradients', description: 'Learning how to act directly' },
-      { id: '8-3', title: 'Exploration vs Exploitation', description: 'Trying new things vs sticking to what works' },
-    ]
-  },
-];
-
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('welcome');
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
@@ -88,6 +29,8 @@ export default function Home() {
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [taskProgress, setTaskProgress] = useState<number>(0);
   const [opaImage, setOpaImage] = useState<string>('a_opa_mediumhappy.png');
+
+  const [lectures, setLectures] = useState<Lecture[]>([]);
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
@@ -124,9 +67,45 @@ export default function Home() {
     };
   }, [isConceptsPanelOpen]);
 
+  useEffect(() => {
+    async function fetchConcepts() {
+      try {
+        const response = await fetch('https://localhost:8000/get-key-concepts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch concepts');
+        }
+        const conceptsFromBackend = await response.json();
+
+        // Map backend concepts into your Concept type
+        const concepts: Concept[] = conceptsFromBackend.map((c: any, index: number) => ({
+          id: c.id ?? `concept-${index}`,
+          title: c.concept ?? "Untitled Concept",
+          description: c.answer ?? "No description available",
+        }));
+
+        // Create fake lectures using these concepts
+        const lecturesData: Lecture[] = [
+          { id: '1', title: 'Machine Learning', concepts },
+          { id: '3', title: 'Deep Learning', concepts },
+          { id: '4', title: 'Fundamentals of AI', concepts },
+          { id: '6', title: 'Computer Vision', concepts },
+          { id: '7', title: 'Natural Language Processing', concepts },
+          { id: '8', title: 'Reinforcement Learning', concepts },
+        ];
+
+        setLectures(lecturesData);
+      } catch (error) {
+        console.error('Error fetching concepts:', error);
+      }
+    }
+
+    fetchConcepts();
+  }, []);
+
   const handleLectureSelect = (lecture: Lecture) => {
     setSelectedLecture(lecture);
     setSelectedConcept(lecture.concepts?.[0] || null);
+
     setAppState('drawing');
   };
 
@@ -227,7 +206,7 @@ export default function Home() {
         {/* Lecture List - absolut positioniert */}
         <div className="absolute top-[480px] left-1/2 -translate-x-1/2 bg-white rounded-3xl shadow-lg p-6 w-[900px] z-30">
           <div className="grid grid-cols-2 gap-4">
-            {LECTURES.map((lecture) => (
+            {lectures.map((lecture) => (
               <button
                 key={lecture.id}
                 onClick={() => handleLectureSelect(lecture)}
