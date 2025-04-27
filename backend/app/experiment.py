@@ -9,7 +9,7 @@ import pandas as pd
 def main():
     # Create OpenAI client instance with API key
     client = OpenAI(
-        api_key="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"
+        api_key=""
     )
     
     # Test audio file from OpenAI samples

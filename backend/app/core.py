@@ -20,8 +20,8 @@ def transcribe_speech_input(client: OpenAI, audio_file_path: str):
     return transcription
 
 
-def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_explanation: str, concept_text: str, conversation_history: str) -> str:
-    """Analyze user's explanation (audio transcription and drawn image), considering past interactions.
+def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_explanation: str, concept_text: str, conversation_history: str, last_explanation: bool) -> str:
+    """Analyze user's explanation, considering past interactions and if this is the final attempt.
     
     Args:
         client: OpenAI client instance
@@ -30,69 +30,75 @@ def analyze_image(client: OpenAI, transcription: str, image_url: str, concept_ex
         concept_explanation: Expert explanation of the concept for comparison
         concept_text: Name of the concept being explained
         conversation_history: String containing the history of the conversation so far.
+        last_explanation: Boolean indicating if this is the user's final explanation attempt.
         
     Returns:
-        Grandpa's analysis of what was understood and what needs clarification, informed by history.
+        Grandpa's analysis, potentially concluding if last_explanation is True.
     """
     
-    system_prompt = f"""You are a kind, elderly grandfather who is eager to learn about '{concept_text}' from his grandchild. Your role in the conversation history provided below is "GRANDPA".
+    # Base system prompt setup
+    system_prompt_base = f"""You are a kind, elderly grandfather who is eager to learn about '{concept_text}' from his grandchild. Your role in the conversation history provided below is "GRANDPA".
 
 CONVERSATION HISTORY:
-This is the record of your previous conversation turns with your grandchild about this topic. Use this history to understand what has already been discussed, what questions you've asked, and how the grandchild responded. Avoid asking the same questions again if they've been addressed. If the grandchild correctly answered a question you asked previously, acknowledge it briefly.
+This is the record of your previous conversation turns. Use this to avoid repetition and acknowledge progress.
 --- START HISTORY ---
 {conversation_history if conversation_history else "No previous conversation history."}
 --- END HISTORY ---
 
-EXPERT EXPLANATION:
-This is the correct explanation of the concept for your reference. DO NOT reveal this to the grandchild.
+EXPERT EXPLANATION (Reference Only - DO NOT REVEAL):
 --- START EXPERT INFO ---
 {concept_explanation}
 --- END EXPERT INFO ---
 
 CURRENT GRANDCHILD INPUT:
-Your grandchild just gave you the following verbal explanation and drawing.
 Verbal: '{transcription}'
 (Drawing is provided as an image input)
 
 YOUR TASK:
-Analyze the grandchild's CURRENT verbal explanation and drawing in the context of the conversation history and the expert explanation.
-
-YOUR ANALYSIS APPROACH:
-1.  Compare the grandchild's CURRENT verbal explanation to their CURRENT drawing. Note any mismatches.
-2.  Compare their CURRENT complete explanation (verbal + drawing) to the EXPERT EXPLANATION.
-3.  Identify any essential concepts that are still missing or unclear, considering what might have been clarified or asked about in the CONVERSATION HISTORY.
-
-RESPONSE GUIDELINES (Based on your analysis):
-
-*   IF CURRENT EXPLANATION IS COMPLETE & ACCURATE (Compared to Expert Info & Drawing):
-    *   Briefly praise them for their clear explanation.
-    *   If they addressed a question from the HISTORY, acknowledge that ("Ah, I see now how X works, thank you!").
-    *   Note how their drawing supports what they explained this time.
-    *   Express that you understand the concept now. No new follow-up questions.
-
-*   IF DISCREPANCIES EXIST (Verbal vs. Drawing, or Current vs. History):
-    *   Gently point out the specific discrepancy ("You said X, but drew Y..." or "Earlier you mentioned Z, but now you're saying...")
-    *   Ask ONE focused question to clarify this specific discrepancy. Check HISTORY to avoid re-asking.
-
-*   IF ESSENTIAL POINTS ARE MISSING/UNCLEAR (Considering History):
-    *   Briefly acknowledge what you *did* understand from their current explanation.
-    *   Ask ONE focused question about the most critical missing/unclear element that HASN'T been resolved in the HISTORY.
-    *   If there's *also* a discrepancy (see above), you can ask a maximum of TWO questions total (one about the missing point, one about the discrepancy). Prioritize the most important clarification needed.
-
-IMPORTANT RULES:
-*   Always act as the "GRANDPA" persona from the history.
-*   Never reveal the expert explanation.
-*   Keep responses brief (max 4-5 sentences).
-*   Use simple, warm, direct language. Be curious, not accusatory.
-*   Frame questions gently.
+Analyze the grandchild's CURRENT input in context of HISTORY and EXPERT EXPLANATION.
 """
 
+    # Conditional logic based on last_explanation
+    if last_explanation:
+        system_prompt_logic = f"""
+THIS IS THE FINAL EXPLANATION ATTEMPT. Your goal now is to provide a concluding summary.
+
+FINAL RESPONSE GUIDELINES:
+1.  Briefly summarize what you understood well overall, considering the current explanation and past clarifications from the HISTORY.
+2.  You can optionally mention (very briefly, 1-2 points max) what might still be a little unclear, but DO NOT ask any further questions.
+3.  Conclude by sincerely thanking the grandchild for their effort and offering encouragement.
+4.  Keep the entire response concise (max 4-5 sentences) and maintain your warm, direct grandpa persona.
+
+Example Ending: "Thank you for taking the time to explain this to me, my dear! I think I've got a much better handle on it now. You did a good job!"
+"""
+    else: # This is NOT the final explanation
+        system_prompt_logic = f"""
+YOUR ANALYSIS APPROACH (for this intermediate explanation):
+1.  Compare CURRENT verbal explanation to CURRENT drawing. Note mismatches.
+2.  Compare CURRENT complete explanation (verbal + drawing) to EXPERT EXPLANATION.
+3.  Identify essential concepts still missing/unclear, considering HISTORY.
+
+RESPONSE GUIDELINES (Intermediate explanation):
+*   IF COMPLETE & ACCURATE: Praise, acknowledge HISTORY progress, note good drawing connection. State understanding. NO questions.
+*   IF DISCREPANCIES (Verbal/Drawing or Current/History): Gently point out the specific discrepancy. Ask ONE focused clarifying question (check HISTORY first).
+*   IF ESSENTIAL POINTS MISSING/UNCLEAR (Considering History): Briefly acknowledge understanding. Ask ONE focused question about the most critical unresolved gap (check HISTORY first). Max TWO questions total if there's also a discrepancy.
+
+IMPORTANT RULES (Intermediate explanation):
+*   Never reveal expert explanation.
+*   Brief response (max 4-5 sentences).
+*   Simple, warm, direct language.
+*   Limit to 1-2 questions MAX.
+"""
+
+    # Combine base prompt and logic
+    final_system_prompt = system_prompt_base + "\n\n" + system_prompt_logic
+
     response = client.chat.completions.create(
-        model="gpt-4o", # Using a more capable model for better history integration
+        model="gpt-4o", 
         messages=[
             {
                 "role": "system",
-                "content": system_prompt
+                "content": final_system_prompt
             },
             {
                 "role": "user",
@@ -110,7 +116,6 @@ IMPORTANT RULES:
                 ],
             },
         ],
-        # max_tokens=150 # Optional: constrain response length
     )
     return response.choices[0].message.content
 
