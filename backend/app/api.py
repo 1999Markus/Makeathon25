@@ -18,46 +18,78 @@ router = APIRouter()
 # Initialize evaluator
 evaluator = Evaluator()
 
-class CourseContent(BaseModel):
-    pdf_path: str
+class EvaluationResponse(BaseModel):
+    score: float = Field(..., description="Evaluation score between 0 and 100")
 
 class FollowUpResponse(BaseModel):
     feedback: str = Field(..., description="Feedback from the grandfather on the explanation")
     audio_data: str = Field(..., description="Base64-encoded audio of the feedback")
 
-@router.post("/evaluate")
+@router.post("/evaluate", response_model=EvaluationResponse)
 async def evaluate_explanation(
-    course_content: CourseContent,
-    audio_file: UploadFile = File(...)
+    concept_id: str = Form(...)
 ):
     """
-    Evaluate a user's voice explanation of course content.
+    Evaluate the user's overall understanding based on conversation history for a specific concept.
     
     Args:
-        course_content: The course content containing the PDF path
-        audio_file: The MP3 file containing user's explanation
+        concept_id (str): The ID of the concept to evaluate.
         
     Returns:
-        A dictionary containing the evaluation score and feedback
+        EvaluationResponse: A dictionary containing the evaluation score.
     """
-    # Save the uploaded file temporarily
-    temp_path = f"temp_{audio_file.filename}"
-    with open(temp_path, "wb") as buffer:
-        content = await audio_file.read()
-        buffer.write(content)
+    print(f"evaluate_explanation function called for concept_id: {concept_id}")
+    concept_file_path = "extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv"
+    history_file_path = "conversation_history.txt"
     
     try:
-        # Evaluate the explanation
-        score, feedback = evaluator.evaluate({"pdf_path": course_content.pdf_path}, temp_path)
+        # 1. Read Concepts CSV
+        if not os.path.exists(concept_file_path):
+            print(f"ERROR: Concepts file not found at {concept_file_path}")
+            raise HTTPException(status_code=404, detail="Concepts data not found.")
         
-        return {
-            "score": score,
-            "feedback": feedback
-        }
-    finally:
-        # Clean up the temporary file
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        concepts = pd.read_csv(concept_file_path)
+        print(f"Loaded concepts from {concept_file_path}")
+
+        # 2. Retrieve the specific concept
+        try:
+            concept_id_int = int(concept_id)
+            if not (1 <= concept_id_int <= len(concepts)):
+                raise ValueError("Concept ID out of range")
+            concept_row = concepts.iloc[concept_id_int - 1]
+            concept_explanation = concept_row.iloc[0]
+            concept_text = concept_row._name[1]
+            print(f"Retrieved concept: ID={concept_id}, Title={concept_text}")
+            concept = {"title": concept_text, "description": concept_explanation}
+        except (ValueError, IndexError) as e:
+            print(f"ERROR: Invalid concept_id '{concept_id}'. Error: {e}")
+            raise HTTPException(status_code=400, detail=f"Invalid or out-of-range concept_id: {concept_id}")
+        
+        # 3. Read Conversation History
+        conversation_history = ""
+        if os.path.exists(history_file_path):
+            with open(history_file_path, "r", encoding="utf-8") as f:
+                conversation_history = f.read()
+                print(f"Loaded conversation history from {history_file_path}")
+        else:
+            print(f"Warning: Conversation history file not found at {history_file_path}. Evaluating based on empty history.")
+            # You might want to return an error or a default score if history is required
+
+        # 4. Call the evaluator function
+        print("Calling evaluator...")
+        score = evaluator.evaluate(concept=concept, chat_history=conversation_history)
+        print(f"Evaluation score received: {score}")
+        
+        # 5. Return the score
+        return EvaluationResponse(score=score)
+
+    except HTTPException as http_exc:
+        # Re-raise HTTPException to let FastAPI handle it
+        raise http_exc
+    except Exception as e:
+        print(f"ERROR in evaluate_explanation: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error evaluating explanation: {str(e)}")
 
 def process_follow_up(client, audio_path, image_path, concept_explanation, concept_text):
     """
@@ -264,8 +296,14 @@ async def get_key_concepts():
     Get the key concepts for the hardcoded course.
     """
     concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
+
     key_concepts = []
-    for tuples in concepts.head(10).itertuples():
-        key_concepts.append(tuples[0]) # row[0] here is a tuple, DON'T CHANGE THIS
+    for i, row in concepts.head(10).iterrows():
+        key_concepts.append({
+            "id": i+1,
+            "concept": row.iloc[0],
+            "question": row.iloc[1],
+            "answer": row.iloc[2],
+        })
 
     return key_concepts

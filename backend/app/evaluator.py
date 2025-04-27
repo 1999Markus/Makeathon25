@@ -1,10 +1,8 @@
 from typing import Dict, Tuple, List, Optional
 import os
 from pathlib import Path
-from .slide_extractor_with_images import extract_key_concepts_and_generate_qa
 import openai
 from dotenv import load_dotenv
-import json
 
 class Evaluator:
     def __init__(self):
@@ -17,49 +15,60 @@ class Evaluator:
     
     def evaluate(self, 
                 concept: Dict,
-                user_answer: str,
                 chat_history: str) -> float:
         """
-        Evaluate a user's explanation of a concept.
+        Evaluate the user's overall understanding of a concept based on the conversation history.
         
         Args:
-            concept (Dict): The concept being explained with its expected answer
-            user_answer (str): The user's current explanation (text from drawing + audio)
-            chat_history (str): Previous conversation history as a text string
+            concept (Dict): The concept being explained, containing 'title' and 'description' (expected answer).
+            chat_history (str): The complete conversation history between the user (grandchild) and the AI (grandpa).
             
         Returns:
-            float: A score between 0 and 100
+            float: A score between 0 and 100 representing the user's understanding demonstrated in the history.
         """
+        
         # Prepare the evaluation prompt
-        evaluation_prompt = f"""You are an AI evaluator helping a student explain concepts to their grandpa. 
-        Evaluate how well the following explanation covers the key points of the concept.
+        evaluation_prompt = f"""You are an AI evaluator assessing a student's understanding of a concept based on their conversation with their AI grandpa.
         
         Concept to explain: {concept['title']}
-        Expected explanation: {concept['description']}
+        Expected key points/explanation: {concept['description']}
         
-        User's current explanation: {user_answer}
-        
-        Previous conversation history:
+        Conversation History (USER = grandchild, GRANDPA = AI):
+        --- START HISTORY ---
         {chat_history}
+        --- END HISTORY ---
         
-        Please provide a score from 0 to 100% for this iteration's explanation quality.
+        Based ONLY on the grandchild's (USER) contributions in the above Conversation History, evaluate how well they have demonstrated understanding of the key points in the Expected Explanation.
+        Consider the entire history. Did the grandchild eventually cover the necessary points, even if prompted by the grandpa?
         
-        Format your response as:
+        Provide a score from 0 to 100% representing the overall understanding demonstrated by the grandchild throughout the conversation.
+        A score of 100 means the grandchild fully explained all key aspects by the end of the conversation.
+        A score of 0 means the grandchild showed no understanding of the key aspects.
+        
+        Format your response ONLY as:
         SCORE: [number between 0 and 100]"""
         
         response = self.client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an expert at evaluating explanations of academic concepts. Always provide scores between 0 and 100."},
+                {"role": "system", "content": "You are an expert evaluator. Provide only the score as requested."}, # Simplified system message
                 {"role": "user", "content": evaluation_prompt}
             ],
-            temperature=0.7
+            temperature=0.5 # Slightly reduced temperature for more consistent scoring
         )
         
         # Parse the response
-        result = response.choices[0].message.content
+        result = response.choices[0].message.content.strip()
         
         # Extract score
-        score = float(result.split("SCORE:")[1].split("\n")[0].strip())
+        try:
+            score_str = result.split("SCORE:")[1].strip()
+            score = float(score_str)
+            # Clamp score between 0 and 100
+            score = max(0.0, min(100.0, score))
+            print(f"Evaluator raw result: {result}, Parsed score: {score}") # Debug log
+        except (IndexError, ValueError) as e:
+            print(f"Error parsing score from response: '{result}'. Error: {e}")
+            score = 0.0 # Default score on parsing error
         
         return score

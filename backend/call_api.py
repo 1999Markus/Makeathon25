@@ -51,7 +51,7 @@ def main():
     base_url = "http://localhost:8000/api"
     concept = "1"
     audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/example_explanation.webm"
-    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/example_notepad.webp"
+    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/bad_example_notepad.webp"
     
     # Call the API
     response = call_ask_follow_up(base_url, concept, audio_file_path, notepad_image_path)
