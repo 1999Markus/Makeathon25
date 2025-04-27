@@ -1,16 +1,19 @@
 export const uploadAndPlayAudio = async ({
                                              audioFile,
                                              imageFile,
-                                             conceptText
+                                             conceptText,
+                                             lastExplanation
                                          }: {
     audioFile: File,
     imageFile: File,
-    conceptText: string
+    conceptText: string,
+    lastExplanation: boolean
 }) => {
     const formData = new FormData();
     formData.append('concept_id', conceptText);
     formData.append('audio_file', audioFile);
     formData.append('notepad_image', imageFile);
+    formData.append('last_explanation', String(lastExplanation));
 
     try {
         const response = await fetch('http://localhost:8000/api/ask-follow-up', {

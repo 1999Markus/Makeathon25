@@ -308,12 +308,7 @@ async def get_key_concepts():
     concepts = pd.read_csv("extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
 
     key_concepts = []
-    for i, row in concepts.head(10).iterrows():
-        key_concepts.append({
-            "id": i+1,
-            "concept": row.iloc[0],
-            "question": row.iloc[1],
-            "answer": row.iloc[2],
-        })
+    for tuples in concepts.head(10).itertuples():
+        key_concepts.append(tuples[0]) # DO NOT CHANGE THIS
 
     return key_concepts
