@@ -414,7 +414,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, conceptTex
               {/* Left side with Cancel button */}
               <button
                 onClick={handleCancel}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors w-32 text-center"
               >
                 Cancel
               </button>
@@ -435,21 +435,20 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, conceptTex
                   
                   @keyframes vibrate {
                     0% { transform: translateX(0); }
-                    25% { transform: translateX(-1px) translateY(-1px); }
-                    50% { transform: translateX(1px) translateY(1px); }
-                    75% { transform: translateX(-1px) translateY(1px); }
-                    100% { transform: translateX(1px) translateY(-1px); }
+                    25% { transform: translateX(-0.5px) translateY(-0.5px); }
+                    50% { transform: translateX(0.5px) translateY(0.5px); }
+                    75% { transform: translateX(-0.5px) translateY(0.5px); }
+                    100% { transform: translateX(0.5px) translateY(-0.5px); }
                   }
                 `}</style>
                 <Mic 
                   className="h-7 w-7 text-red-600"
-                  style={{ animation: 'vibrate 0.2s linear infinite' }}
+                  style={{ animation: 'vibrate 0.3s linear infinite' }}
                 />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full animate-ping"></span>
               </div>
 
               {/* Drawing tools */}
-              <div className="flex-1 flex gap-3 items-center justify-center">
+              <div className="flex-1 flex gap-3 items-center justify-start ml-39">
                 <button
                   onClick={toggleEraser}
                   title="Pen"
@@ -486,7 +485,7 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, conceptTex
               {/* Right side with Done button */}
               <button
                 onClick={handleDone}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow-md transition-colors w-32 text-center"
               >
                 I'm done
               </button>
