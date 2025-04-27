@@ -59,8 +59,8 @@ def main():
     # Example usage
     base_url = "http://localhost:8000/api"
     concept_id = "1" # Changed variable name for clarity
-    audio_file_path = "/Users/markuslohde/Desktop/Makeathon25/example_explanation.webm"
-    notepad_image_path = "/Users/markuslohde/Desktop/Makeathon25/bad_example_notepad.webp"
+    audio_file_path = "example_explanation.webm"
+    notepad_image_path = "bad_example_notepad.webp"
     is_last_explanation = True # Set this to True for the final explanation
     
     # Call the API

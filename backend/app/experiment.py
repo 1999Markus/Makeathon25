@@ -53,7 +53,7 @@ def main():
 
 
 def get_concept(concept_id):
-    concepts = pd.read_csv("/Users/markuslohde/Desktop/Makeathon25/backend/extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
+    concepts = pd.read_csv("backend/extracted_key_concepts/ArtificialIntelligence_2_IntelligentAgents-2_qa.csv")
     concept_row = concepts.iloc[int(concept_id) - 1]
     concept_explanation = concept_row.iloc[0]
     concept_text = concept_row._name[1]
