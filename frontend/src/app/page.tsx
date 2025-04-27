@@ -583,7 +583,7 @@ export default function Home() {
                             setConceptExplanationCount(0);
                             // Force canvas to clear by incrementing the key
                             setCanvasKey(prev => prev + 1);
-                            
+
                             // Check if there are more concepts
                             if (currentConceptIndex !== -1 && totalConcepts > 1) {
                               // Move to next concept
@@ -600,17 +600,7 @@ export default function Home() {
                         </button>
                       ) : (
                         // Get feedback button after 3 explanations
-                        <button
-                          onClick={() => {
-                            // Set random feedback message
-                            const randomIndex = Math.floor(Math.random() * feedbackMessages.length);
-                            setFeedbackMessage(feedbackMessages[randomIndex]);
-                            setShowingFeedback(true);
-                          }}
-                          className="bg-green-500 hover:bg-green-600 text-white text-lg py-4 px-8 rounded-lg shadow-lg transform transition-transform hover:scale-105 z-10 mb-4"
-                        >
-                          Get feedback
-                        </button>
+                          <div className="w-0 h-0" />
                       )}
                       
                       {/* Next Concept Button innerhalb des Overlays - immer anzeigen, ggf. deaktivieren */}
@@ -690,7 +680,6 @@ export default function Home() {
                         setTaskProgress(result)
                       }).catch((ignored) => {})
 
-                      
                       if (feedbackText) {
                         setOpaQuestion(feedbackText); // Set the speech bubble to the feedback text
                         console.log("Processing finished. Displaying feedback:", feedbackText);
