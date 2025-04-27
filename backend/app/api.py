@@ -91,7 +91,7 @@ async def evaluate_explanation(
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error evaluating explanation: {str(e)}")
 
-def process_follow_up(client, audio_path, image_path, concept_explanation, concept_text):
+def process_follow_up(client, audio_path, image_path, concept_explanation, concept_text, last_explanation: bool):
     """
     Process a follow-up question with audio and image data.
     
@@ -101,6 +101,7 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         image_path: Path to the temporary image file (WebP format)
         concept_explanation: The explanation of the concept
         concept_text: The text of the concept
+        last_explanation: Boolean indicating if this is the user's final explanation attempt.
     Returns:
         tuple: (feedback, audio_output_path, transcription)
     """
@@ -134,7 +135,15 @@ def process_follow_up(client, audio_path, image_path, concept_explanation, conce
         
         # Analyze the image with audio transcription and history
         print("Analyzing image with transcription and history...")
-        feedback = analyze_image(client, transcription_text, image_url, concept_explanation, concept_text, conversation_history)
+        feedback = analyze_image(
+            client=client, 
+            transcription=transcription_text, 
+            image_url=image_url, 
+            concept_explanation=concept_explanation, 
+            concept_text=concept_text, 
+            conversation_history=conversation_history,
+            last_explanation=last_explanation # Pass the flag here
+        )
         print("Analysis completed")
         
         # Generate audio response
@@ -211,6 +220,7 @@ def save_conversation_to_history(user_input: str, ai_response: str):
 @router.post("/ask-follow-up", response_model=FollowUpResponse)
 async def ask_follow_up(
     concept_id: str = Form(..., description="ID of the concept being explained"),
+    last_explanation: bool = Form(False, description="Whether this is the second follow-up question"),
     audio_file: UploadFile = File(..., description="Audio recording of the explanation (WebM format)"),
     notepad_image: UploadFile = File(..., description="Image of drawn notes or diagram (WebP format)")
 ):
@@ -254,7 +264,7 @@ async def ask_follow_up(
         print(f"Concept text: {concept_text}")
 
         # Process the follow-up using extracted function
-        feedback, audio_output_path, transcription = process_follow_up(client, audio_path, image_path, concept_explanation, concept_text)
+        feedback, audio_output_path, transcription = process_follow_up(client, audio_path, image_path, concept_explanation, concept_text, last_explanation)
         
         # Read the audio file and encode it as base64
         print("Encoding audio file as base64...")
