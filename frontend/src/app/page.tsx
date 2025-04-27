@@ -437,9 +437,7 @@ export default function Home() {
                 <div className="relative z-10">
                   <p className="text-lg mt-2">
                     {showingFeedback ? feedbackMessage : 
-                      (conceptExplanationCount >= 3 ? 
-                        "Thank you for your explanations! Would you like to get some feedback on how well I understood?" : 
-                        (opaQuestion ? opaQuestion : 
+                      ((opaQuestion ? opaQuestion : 
                           `Please explain the concept of ${selectedConcept?.title.toLowerCase() || 'this concept'} to me`
                         )
                       )
