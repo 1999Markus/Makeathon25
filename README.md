@@ -8,7 +8,7 @@ Opa AI is an interactive learning tool that helps users deeply understand their 
 The idea is based on two proven principles:
 1. Active retrieval significantly boosts memory retention.
 2. If you can explain a topic simply enough that even your grandpa would understand, you have truly mastered it.
-   With Opa AI, users explain their lecture material in their own words. A curious grandpa character listens carefully and asks smart, challenging follow-up questions to test the user's understanding and encourage deeper thinking. 
+   With Opa AI, users explain their lecture material in their own words. A curious grandpa character listens carefully and asks smart, challenging follow-up questions to test the user's understanding and encourage deeper thinking.
 Users interact with Opa AI through two input methods:
 1. Speech: They explain concepts out loud, which is transcribed and analyzed using OpenAI’s speech-to-text models.
 2. Drawing: They can draw diagrams on a canvas, which Opa AI interprets using vision models to understand and further question the explanation.
@@ -53,7 +53,7 @@ Users interact with Opa AI through two input methods:
 
 4. Start the backend server:
    ```bash
-   python main.py
+   fastapi dev
    ```
    The backend server will run on http://localhost:8000
 
