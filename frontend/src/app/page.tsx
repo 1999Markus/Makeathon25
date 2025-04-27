@@ -346,7 +346,7 @@ export default function Home() {
           
           {/* PDF Upload-Bereich */}
           <div className="mt-4 p-2 border-t border-gray-200 pt-3">
-            <h3 className="text-lg mb-2 text-center text-gray-700">Upload New Lecture Slides</h3>
+            <h3 className="text-lg mb-2 text-center text-gray-700">Upload new lecture slides</h3>
             <div className="h-16 relative">
               <PDFUploader 
                 onUploadSuccess={(message) => {
@@ -357,10 +357,6 @@ export default function Home() {
                   // Error handling
                 }}
               />
-              
-              <div className="mt-1 text-center text-xs text-gray-500">
-                Drag and drop your PDF files here to upload
-              </div>
             </div>
           </div>
         </div>
@@ -399,12 +395,12 @@ export default function Home() {
 
           {/* Header and New Overview Box Container - Moved higher */}
           <div className="relative mt-4">
-            {/* Existing Header (Lecture Title) */}
-            <div className="flex items-center justify-between">
+            {/* Existing Header (Lecture Title) - Ausgeblendet */}
+            {/* <div className="flex items-center justify-between">
               <div className="text-gray-600">
                 {selectedLecture?.title || "Lecture"}
               </div>
-            </div>
+            </div> */}
 
             {/* Concept Overview Box (Top Middle) - With Navigation */}
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[300px] bg-white py-3 px-6 rounded-2xl shadow-lg flex items-center gap-4 z-20">
@@ -652,8 +648,7 @@ export default function Home() {
                     >
                       <div className="absolute inset-0 bg-black/80 rounded-3xl"></div>
                       <div className="relative z-10 text-white text-center">
-                        <div className="text-xl mb-4">Give me a second to think about it.</div>
-                        <div className="text-sm">Click anywhere to continue</div>
+                        <div className="text-xl">Give me a second to think about it.</div>
                       </div>
                     </div>
                   )}
@@ -701,7 +696,7 @@ export default function Home() {
 
                 {/* Progress Bar - Positioned between canvas and right edge */}
                 <div 
-                  className="absolute right-[-100px] top-0 h-full w-20 bg-white/80 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center p-4 rounded-2xl"
+                  className="absolute right-[-150px] top-0 h-full w-20 bg-white/80 backdrop-blur-sm shadow-lg flex flex-col items-center justify-center p-4 rounded-2xl"
                   onMouseMove={handleProgressMouseMove}
                   onMouseUp={handleProgressMouseUp}
                 >
