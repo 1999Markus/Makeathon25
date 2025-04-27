@@ -38,6 +38,7 @@ export default function Home() {
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
 
@@ -125,6 +126,31 @@ export default function Home() {
       setOpaImage('a_opa_veryhappy_.png');
     }
   }, [taskProgress, isRecordingAudio, showLoadingScreen]);
+
+  // Zeige Konfetti, wenn der Score 95 oder höher ist
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
+    
+    if (taskProgress >= 95) {
+      // Konfetti anzeigen
+      setShowConfetti(true);
+      
+      // Nach 5 Sekunden ausblenden
+      timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+    } else {
+      // Konfetti ausblenden, wenn der Score unter 95 fällt
+      setShowConfetti(false);
+    }
+    
+    // Timer bereinigen, wenn die Komponente unmounted wird
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [taskProgress]);
 
   useEffect(() => {
     async function fetchConcepts() {
@@ -428,6 +454,53 @@ export default function Home() {
 
             {/* Drawing Area Container */}
             <div className="relative flex flex-col items-center">
+              {/* Konfetti-Animation */}
+              {showConfetti && (
+                <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+                  {Array.from({ length: 50 }).map((_, i) => {
+                    const colors = ['#ff577f', '#ff884b', '#ffd384', '#9999ff', '#4c9a52', '#6886c5', '#ffac4b'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const isCircle = Math.random() > 0.5;
+                    const size = 5 + Math.random() * 10;
+                    const left = Math.random() * 100;
+                    const animationDuration = 3 + Math.random() * 3;
+                    const delay = Math.random() * 2;
+                    const startPosition = -50 - Math.random() * 100; // Starte oberhalb des sichtbaren Bereichs
+                    
+                    return (
+                      <div 
+                        key={i}
+                        style={{
+                          position: 'absolute',
+                          left: `${left}%`,
+                          top: `${startPosition}px`,
+                          width: `${size}px`,
+                          height: `${size}px`,
+                          backgroundColor: color,
+                          borderRadius: isCircle ? '50%' : '0',
+                          opacity: 0.8,
+                          transform: `rotate(${Math.random() * 360}deg)`,
+                          animation: `confettiFall ${animationDuration}s linear forwards, confettiSway ${animationDuration/2}s ease-in-out infinite alternate`,
+                          animationDelay: `${delay}s`,
+                        }}
+                      />
+                    );
+                  })}
+                  
+                  <style jsx global>{`
+                    @keyframes confettiFall {
+                      from { transform: translateY(0) rotate(0deg); }
+                      to { transform: translateY(100vh) rotate(360deg); }
+                    }
+                    
+                    @keyframes confettiSway {
+                      from { margin-left: -25px; }
+                      to { margin-left: 25px; }
+                    }
+                  `}</style>
+                </div>
+              )}
+              
               {/* Grandpa Image with Animation */}
               <div className={`absolute ${opaImage === 'a_opa_veryhappy_.png' ? 'top-[-0px]' : 'top-[20px]'} left-1/2 -translate-x-1/2 w-[700px] h-[300px] z-50`}>
                 <style jsx>{`
