@@ -705,7 +705,8 @@ export default function Home() {
                       setIsRecordingAudio(isRecording);
                       console.log(`Audio recording status: ${isRecording ? 'active' : 'inactive'}`);
                     }}
-                    concept={selectedConcept?.id || '1'}
+                    conceptText={selectedConcept?.id || '1'}
+                    conceptExplanationCount={conceptExplanationCount}
                   />
                 </div>
 

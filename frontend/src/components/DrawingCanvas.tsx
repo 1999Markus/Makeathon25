@@ -10,12 +10,13 @@ interface DrawingCanvasProps {
   onStart: () => void;
   onCancel: () => void;
   onDone: (feedback?: string) => void;
-  concept: string;
+  conceptText: string;
+  conceptExplanationCount: number;
   onAudioStatusChange?: (isRecording: boolean) => void;
   onProcessingStart?: () => void;
 }
 
-export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, onAudioStatusChange, onProcessingStart }: DrawingCanvasProps) {
+export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, conceptText, conceptExplanationCount, onAudioStatusChange, onProcessingStart }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -374,7 +375,13 @@ export function DrawingCanvas({ isEnabled, onStart, onCancel, onDone, concept, o
       const imageFile = new File([blob], `drawing_${Date.now()}.webp`, { type: blob.type });
 
       // Upload using your service and capture the feedback string
-      const feedbackText = await uploadAndPlayAudio({audioFile, imageFile, conceptText: concept});
+      const isLastExplanation = conceptExplanationCount === 2;
+      const feedbackText = await uploadAndPlayAudio({
+        audioFile,
+        imageFile,
+        conceptText,
+        lastExplanation: isLastExplanation
+      });
 
       // Call onDone with the feedback string *after* processing finishes
       onDone(feedbackText);
