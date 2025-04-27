@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { PDFUploader } from "@/components/PDFUploader";
+import {evaluateExplanation} from "@/services/evaluateScore";
 
 type AppState = 'welcome' | 'drawing';
 
@@ -611,6 +612,11 @@ export default function Home() {
                     onDone={(feedbackText) => { // Expect the feedback string directly
                       setShowLoadingScreen(false); // Hide loading screen when done
                       setConceptExplanationCount(prev => prev + 1);
+
+                      evaluateExplanation(selectedConcept?.id || '1').then((result) => {
+                        setTaskProgress(result)
+                      }).catch((ignored) => {})
+
                       
                       if (feedbackText) {
                         setOpaQuestion(feedbackText); // Set the speech bubble to the feedback text
