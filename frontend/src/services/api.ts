@@ -32,3 +32,14 @@ export async function calculateScore(conceptId: string, audioFile: File): Promis
 
   return response.json();
 } 
+
+export async function initiateSession(): Promise<{ session_id: string, endpoint: string}> {
+  const response = await fetch('http://localhost:8000/api/session/initiate', {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to initiate session');
+  }
+  const data = await response.json();
+  return data;
+}

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     
     # OpenAI API key
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_transcription_url: str = "wss://api.openai.com/v1/realtime?intent=transcription"
     
     # Audio and image file settings
     audio_dir: str = "audio_responses"

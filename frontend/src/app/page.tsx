@@ -7,6 +7,8 @@ import { ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { PDFUploader } from "@/components/PDFUploader";
 import {evaluateExplanation} from "@/services/evaluateScore";
+import { Button } from "@/components/ui/button";
+import { initiateSession } from "@/services/api";
 
 type AppState = 'welcome' | 'drawing';
 
@@ -40,8 +42,9 @@ export default function Home() {
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [sessionID, setSessionID] = useState<string>('');
+  const [endpoint, setEndpoint] = useState<string>('');
 
   // Ref for the panel to handle click outside
   const conceptsPanelRef = useRef<HTMLDivElement>(null);
@@ -232,6 +235,13 @@ export default function Home() {
     setSelectedConcept(selectedLecture.concepts[prevIndex]);
   };
 
+  const handleInitiateSession = async () => {
+    const jsonResponse = await initiateSession()
+    // extract session id and endpoint from json
+    setSessionID(jsonResponse.session_id)
+    setEndpoint(jsonResponse.endpoint)
+  }
+
   const canNavigateConcepts = totalConcepts > 1;
   // --- End Concept Navigation Logic ---
 
@@ -263,6 +273,7 @@ export default function Home() {
   if (appState === 'welcome') {
     return (
       <div className="min-h-screen bg-[#e6f7ff] p-8 relative">
+        <Button onClick={handleInitiateSession}></Button>
         {/* Logo */}
         <div className="absolute top-0 right-8 w-36 h-36">
           <Image

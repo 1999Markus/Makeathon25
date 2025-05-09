@@ -1,16 +1,19 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 import os
 import uuid
-from pydantic import BaseModel, Field
-from typing import Optional
-from .core import analyze_image, generate_answer_audio, transcribe_speech_input
-from openai import OpenAI
-from .evaluator import Evaluator
 import base64
-from .config import settings
 import traceback
 import pandas as pd
 import datetime
+import websockets
+import json
+import asyncio
+
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, WebSocket, WebSocketDisconnect
+from .config import settings
+from pydantic import BaseModel, Field
+from .core import analyze_image, generate_answer_audio, transcribe_speech_input
+from openai import OpenAI
+from .evaluator import Evaluator
 
 # Create router instead of app
 router = APIRouter()
@@ -24,6 +27,9 @@ class EvaluationResponse(BaseModel):
 class FollowUpResponse(BaseModel):
     feedback: str = Field(..., description="Feedback from the grandfather on the explanation")
     audio_data: str = Field(..., description="Base64-encoded audio of the feedback")
+
+# Store active voice sessions 
+active_voice_sessions = {}
 
 @router.post("/evaluate", response_model=EvaluationResponse)
 async def evaluate_explanation(
@@ -312,3 +318,40 @@ async def get_key_concepts():
         key_concepts.append(tuples[0]) # DO NOT CHANGE THIS
 
     return key_concepts
+
+# Endpoints for real-time transcription
+
+@router.post("/session/initiate")
+async def initiate_voice_session(concept_id: str = Form(...)):
+    """
+    Initiate a voice session and return the endpoint to the client
+    """ 
+    session_id: str = str(uuid.uuid4())
+    active_voice_sessions[session_id] = {
+        "concept_id": concept_id,
+        "audio_chunks": [],
+        "transcription": ""
+    }
+    print(f"Session initiated with ID: {session_id}")
+    return {
+        "session_id": session_id,
+        "endpoint": f"api/session/stream_audio/{session_id}"
+    }
+
+
+async def openai_message_listener(session_id: str, openai_ws: websockets.client.ClientProtocol):
+    pass
+
+
+@router.websocket("/session/stream_audio_async/{session_id}")
+async def stream_audio_async(websocket: WebSocket, session_id: str):
+    pass    
+        
+
+@router.post("/session/finalize_stream", response_model=FollowUpResponse)
+async def finalize_stream_multi_session(
+    session_id: str = Form(...),
+    notepad_image: UploadFile = File(..., description="Image of drawn notes or diagram (WebP format)"),
+    last_explanation: bool = Form(False, description="Whether this is the second follow-up question")
+):
+    pass
